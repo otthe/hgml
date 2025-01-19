@@ -29,15 +29,55 @@ export default class HGML {
     const objects = this.getObjectsByType(type);
   }
 
-  static createObject(e) {
+  static createObject(e, hgmlInstance) {
     const obj = {};
     obj.type = e.tagName;
 
+    // Process attributes as object's values
     for (const attr of e.attributes) {
       const name = attr.name;
       const value = isNaN(attr.value) ? attr.value : parseFloat(attr.value);
   
       obj[name] = value;
+    }
+
+    // Process children with the name 'METHOD' as object methods
+    const children = e.children;
+    for (let i = 0; i < children.length; i++) {
+      const c = children[i];
+      const type = c.tagName;
+      console.log(type);
+
+      if (type === 'METHOD') {
+        let methodName = null;
+  
+        for (const attr of c.attributes) {
+          if (attr.name === 'name') {
+            methodName = attr.value;
+            break;
+          }
+        }
+  
+        // if (methodName) {
+        //   // obj[methodName] = function () {
+        //   //   console.log(`Method '${methodName}' called on`, obj);
+        //   // };
+        //   const methodLogic = c.getAttribute('action') || `console.log('Method ${methodName} executed')`;
+        //   obj[methodName] = new Function(methodLogic);
+        // }
+
+        if (methodName) {
+          const methodLogic = c.getAttribute('action') || `console.log('Method ${methodName} executed')`;
+  
+          // Dynamically create method and bind HGML instance as an argument
+          obj[methodName] = function () {
+            const hgml = hgmlInstance; // Reference to HGML instance
+            return new Function("hgml", methodLogic).call(this, hgml);
+          };
+        }
+
+      }
+
     }
 
     return obj;
@@ -47,11 +87,11 @@ export default class HGML {
     const gameElements = this.game.children;
 
     for (const element of gameElements) {
-      const obj = HGML.createObject(element);
+      const obj = HGML.createObject(element, this);
       this.G.objects.push(obj);
     }
 
-    const options = HGML.createObject(this.game);
+    const options = HGML.createObject(this.game, this);
 
     const gameCanvas = document.createElement("canvas");
     gameCanvas.setAttribute("id", "hgml");

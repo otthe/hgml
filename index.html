@@ -3,20 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HGML test</title>
+  <title>HGML example</title>
   <script defer src="hgml.js" type="module"></script>
 </head>
 <body>
+
+  <!-- MAKE SURE YOU ARE NOT USING ELEMENT NAMES THAT ARE RESERVED IN TRADITIONAL HTML -->
   <game w="800" h="600">
 
     <player x="100" y="100" w="32" h="32" color="blue">
       <method name="moveLeft"></method>
       <method name="moveRight"></method>
       <method name="moveUp"></method>
-      <method name="moveDown"></method>
+      <method name="moveDown" action="
+        // INLINE METHODS CAN ACCESS GAME INSTANCE PROPERTIES with 'hgml'
+        // FOR EXAMPLE: console.log(hgml.G);
+        this.y -= 5;
+        if (this.y < 0) {
+          this.y = 600
+        }
+      "></method>
     </player>
 
-    <wall x="200" y="200" w="32" h="32" color="black" static="true"></wall>
+    <wall x="200" y="200" w="32" h="32" color="black"></wall>
     <wall x="300" y="200" w="32" h="32" color="black"></wall>
     <wall x="400" y="200" w="32" h="32" color="black"></wall>
 
@@ -25,6 +34,7 @@
     <item x="400" y="400" w="32" h="32" color="yellow"></item>
 
   </game>
+
 </body>
 
 <script type="module">
@@ -34,8 +44,9 @@ const hgml = new HGML().init();
 console.log(hgml.getState());
 
 function update(obj, deltaTime) {
-  if (obj.type === "PLAYER" || obj.type === "ENEMY") {
-    obj.x += 0.1 * deltaTime;
+  if (obj.type === "PLAYER") {
+    //obj.x += 0.1 * deltaTime;
+    obj.moveDown();
   }
 }
 
