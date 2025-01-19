@@ -11,7 +11,9 @@
   <!-- MAKE SURE YOU ARE NOT USING ELEMENT NAMES THAT ARE RESERVED IN TRADITIONAL HTML -->
   <game w="800" h="600">
 
-    <player x="100" y="100" w="32" h="32" color="blue">
+    <sprite name="player" src="player.png"></sprite>
+
+    <player x="100" y="100" w="48" h="96" color="blue">
       <!-- You can define methods directly inside the markup if you want-->
       <method name="moveLeft" action="
         this.x -= 0.4 * hgml.G.deltaTime;">
@@ -36,14 +38,10 @@
     <wall x="0" y="568" w="800" h="32" color="black" solid="true"></wall>
     <wall x="384" y="0" w="32" h="448" color="black" solid="true"></wall>
 
-    <enemy x="288" y="300" w="64" h="64" color="red">
-      <!-- <method name="moveToRandomDirection" parameters='["deltaTime"]' action="
-        this.x += 0.4*deltaTime;">
-      </method> -->
-    </enemy>
+    <enemy x="288" y="300" w="64" h="64" color="red"></enemy>
     <enemy x="448" y="300" w="64" h="64" color="red"></enemy>
 
-    <item x="400" y="400" w="32" h="32" color="yellow">
+    <coin x="400" y="400" w="32" h="32" color="yellow">
       <method name="pickRandomPosition" action="
         const maxX = hgml.G.options.w - this.w;
         const minX = this.w;
@@ -52,8 +50,7 @@
         this.x = Math.floor(Math.random() * (maxX - minX + 1)) + minX;
         this.y = Math.floor(Math.random() * (maxY - minY + 1)) + minY;">
       </method>
-    </item>
-
+    </coin>
   </game>
 
 </body>
@@ -61,9 +58,6 @@
 <script type="module">
 import HGML from './hgml.js';
 
-// hgml.startGameLoop(update, render);
-
-// keyboard input for movement and game reset
 const keys = {};
 document.addEventListener('keydown', (e) => {
   keys[e.key] = true; 
@@ -79,7 +73,7 @@ document.addEventListener("keydown", (e) => {
     console.log("Resetting the game...");
     hgml.resetGame();
     console.log(hgml.getState());
-    item = hgml.getObjectByType("ITEM");
+    coin = hgml.getObjectByType("COIN");
     let enemies = hgml.getAllObjectsByType("ENEMY");
     enemies.forEach((enemy) => {
         enemy.moveToRandomDirection = function(deltaTime) {
@@ -91,11 +85,18 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-// initialize the game
-const hgml = new HGML().init();
+let coin = null;
+let playerSprite = null;
+const hgml = new HGML();
+
+
+await hgml.init()
+hgml.startGameLoop();
+
 console.log(hgml.getState());
 
-let item = hgml.getObjectByType("ITEM");
+coin = hgml.getObjectByType("COIN");
+playerSprite = hgml.getSprite("player");
 
 // another way to add methods to objects
 // note that if you add methods this way you have to add them again when you reset game state
@@ -105,8 +106,6 @@ enemies.forEach((enemy) => {
     this.x += 1 * deltaTime;
   }
 });
-
-hgml.startGameLoop();
 
 hgml.setUpdate((obj, deltaTime) => {
   if (obj.type === "PLAYER") {
@@ -123,8 +122,8 @@ hgml.setUpdate((obj, deltaTime) => {
       obj.moveDown(deltaTime);
     }
 
-    if (hgml.checkCollision(obj, item)) {
-      item.pickRandomPosition();
+    if (hgml.checkCollision(obj, coin)) {
+      coin.pickRandomPosition();
     }
   }
 
@@ -134,8 +133,16 @@ hgml.setUpdate((obj, deltaTime) => {
 });
 
 hgml.setRender((obj, ctx) => {
-  ctx.fillStyle = obj.color || '#000';
-  ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
+  if (obj.type === "PLAYER") {
+    ctx.drawImage(playerSprite, obj.x, obj.y, obj.w, obj.h);
+  } /*else if (obj.type === "COIN") {
+    ctx.beginPath();
+    ctx.arc(95, 50, 40, 0, 2 * Math.PI);
+    ctx.stroke();
+  }*/ else {
+    ctx.fillStyle = obj.color || '#000';
+    ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
+  }
 });
 
 </script>

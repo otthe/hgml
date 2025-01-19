@@ -10,7 +10,9 @@ export default class HGML {
       instance: null,
       running: false,
       lastFrameTime: 0,
-      deltaTime: 0
+      deltaTime: 0,
+
+      sprites: {}
     };
 
     this.updateCallback = null;
@@ -124,10 +126,63 @@ export default class HGML {
     return obj;
   }
 
-  init() {
+  /**
+ * Loads a sprite and stores it in the G.sprites object.
+ * @param {string} name - The name of the sprite.
+ * @param {string} src - The source URL of the sprite image.
+ */
+  loadSprite(name, src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = src;
+
+      img.onload = () => {
+        this.G.sprites[name] = img;
+        resolve(img);
+      };
+
+      img.onerror = (err) => {
+        console.error(`Failed to load sprite: ${src}`);
+        reject(err);
+      };
+    });
+  }
+
+  /**
+   * Retrieves a sprite by name.
+   * @param {string} name - The name of the sprite.
+   * @returns {HTMLImageElement|null} - The sprite image, or null if not found.
+   */
+  getSprite(name) {
+    return this.G.sprites[name] || null;
+  }
+
+  async loadSpritesFromDOM() {
+    const spriteElements = this.game.querySelectorAll('sprite');
+  
+    const promises = Array.from(spriteElements).map((sprite) => {
+      const name = sprite.getAttribute('name');
+      const src = sprite.getAttribute('src');
+  
+      if (!name || !src) {
+        console.error('Sprite element is missing a name or src attribute:', sprite);
+        return Promise.resolve();
+      }
+  
+      return this.loadSprite(name, src);
+    });
+  
+    return Promise.all(promises);
+  }
+
+  async init() {
+    await this.loadSpritesFromDOM();
+
     const gameElements = this.game.children;
 
     for (const element of gameElements) {
+      if (element.tagName === 'SPRITE') continue; //skip sprites
+
       const obj = HGML.createObject(element, this);
       this.G.objects.push(obj);
     }
