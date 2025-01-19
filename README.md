@@ -47,3 +47,19 @@
   </game>
 
 ```
+
+# Game objects...
+Must have:
+-x,y,w,h
+
+Should have:
+color
+
+Can have:
+image
+method(s) --> as child
+
+# Built-in methods
+checkCollision(obj1, obj2) --> check if objects are colliding
+
+getState() --> returns information about HGML instance

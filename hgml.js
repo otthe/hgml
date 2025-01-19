@@ -12,6 +12,37 @@ export default class HGML {
       lastFrameTime: 0,
       deltaTime: 0
     };
+
+    this.updateCallback = null;
+    this.renderCallback = null;
+  }
+
+  setUpdate(callback) {
+    if (typeof callback === 'function') {
+      this.updateCallback = callback;
+    } else {
+      throw new Error("Update callback must be a function");
+    }
+  }
+
+  setRender(callback) {
+    if (typeof callback === 'function') {
+      this.renderCallback = callback;
+    } else {
+      throw new Error("Render callback must be a function");
+    }
+  }
+
+  update(obj, deltaTime) {
+    if (this.updateCallback) {
+      this.updateCallback(obj, deltaTime);
+    }
+  }
+
+  render(obj, ctx) {
+    if (this.renderCallback) {
+      this.renderCallback(obj, ctx);
+    }
   }
 
   getAllObjectsByType(type) {
@@ -126,64 +157,33 @@ export default class HGML {
     return this.G;
   }
 
-  // startGameLoop(updateCallback, renderCallback) {
-  //   this.G.running = true;
-
-  //   const loop = (timestamp) => {
-  //     if (!this.G.running) return;
-
-  //     const deltaTime = timestamp - this.G.lastFrameTime;
-  //     this.G.deltaTime = deltaTime;
-  //     this.G.lastFrameTime = timestamp;
-
-  //     const fps = 1000/deltaTime;
-  //     //console.log(`FPS: ${fps.toFixed(2)}`);
-
-  //     if (typeof updateCallback === "function") {
-  //       for (const obj of this.G.objects) {
-  //         updateCallback(obj, deltaTime);
-  //       }
-  //     }
-
-  //     this.G.ctx.clearRect(0, 0, this.G.instance.width, this.G.instance.height);
-
-  //     if (typeof renderCallback === "function") {
-  //       for (const obj of this.G.objects) {
-  //         renderCallback(obj, this.G.ctx);
-  //       }
-  //     }
-
-  //     requestAnimationFrame(loop);
-  //   };
-
-  //   this.G.lastFrameTime = performance.now();
-  //   requestAnimationFrame(loop); 
-  // }
-
-  startGameLoop(updateCallback, renderCallback) {
+  startGameLoop() {
     this.G.running = true;
   
+    const MAX_DELTA_TIME = 1000 / 60;
+
     const loop = (timestamp) => {
       if (!this.G.running) return;
   
-      const deltaTime = timestamp - this.G.lastFrameTime;
-      this.G.deltaTime = deltaTime;
+      let deltaTime = timestamp - this.G.lastFrameTime;
       this.G.lastFrameTime = timestamp;
   
+      deltaTime = Math.min(deltaTime, MAX_DELTA_TIME);
+
+      this.G.deltaTime = deltaTime;
+
       const solidObjects = this.G.objects.filter(obj => obj.solid); // Identify solid objects
   
-      for (const movingObj of this.G.objects) {
-        if (movingObj.solid) continue;
+      for (const obj of this.G.objects) {
+        if (obj.solid) continue;
   
         // Update the object via the callback
-        if (typeof updateCallback === "function") {
-          updateCallback(movingObj, deltaTime);
-        }
+        this.update(obj, deltaTime);
   
         // Check for collisions with solid objects
         for (const staticObj of solidObjects) {
-          if (this.checkCollision(movingObj, staticObj)) {
-            this.resolveCollision(movingObj, staticObj); // Resolve overlap
+          if (this.checkCollision(obj, staticObj)) {
+            this.resolveCollision(obj, staticObj); // Resolve overlap
           }
         }
       }
@@ -192,11 +192,10 @@ export default class HGML {
       this.G.ctx.clearRect(0, 0, this.G.instance.width, this.G.instance.height);
   
       // Render each object
-      if (typeof renderCallback === "function") {
-        for (const obj of this.G.objects) {
-          renderCallback(obj, this.G.ctx);
-        }
+      for (const obj of this.G.objects) {
+        this.render(obj, this.G.ctx);
       }
+
   
       requestAnimationFrame(loop);
     };
