@@ -21,8 +21,17 @@ export default class HGML {
     return this.game.querySelectorAll(tag)
   }
 
+  getObjectsByType(type) {
+    return this.G.objects.filter(obj => obj.type === type);
+  }
+
+  addFunction(type) {
+    const objects = this.getObjectsByType(type);
+  }
+
   static createObject(e) {
     const obj = {};
+    obj.type = e.tagName;
 
     for (const attr of e.attributes) {
       const name = attr.name;
@@ -48,6 +57,7 @@ export default class HGML {
     gameCanvas.setAttribute("id", "hgml");
     gameCanvas.width = options.w || 800;
     gameCanvas.height = options.h || 600; 
+    gameCanvas.style.backgroundColor = '#7cb7d9'
 
     const ctx = gameCanvas.getContext("2d");
     ctx.imageSmoothingEnabled = false;
@@ -78,10 +88,6 @@ export default class HGML {
       const fps = 1000/deltaTime;
       //console.log(`FPS: ${fps.toFixed(2)}`);
 
-      // if (typeof updateCallback === "function") {
-      //   updateCallback(this.G, deltaTime);
-      // }
-
       if (typeof updateCallback === "function") {
         for (const obj of this.G.objects) {
           updateCallback(obj, deltaTime);
@@ -90,16 +96,11 @@ export default class HGML {
 
       this.G.ctx.clearRect(0, 0, this.G.instance.width, this.G.instance.height);
 
-      // if (typeof renderCallback === "function") {
-      //   renderCallback(this.G, this.G.ctx);
-      // }
-
       if (typeof renderCallback === "function") {
         for (const obj of this.G.objects) {
           renderCallback(obj, this.G.ctx);
         }
       }
-
 
       requestAnimationFrame(loop);
     };
