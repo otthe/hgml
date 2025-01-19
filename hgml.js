@@ -14,14 +14,6 @@ export default class HGML {
     };
   }
 
-  // get(tag) {
-  //   return this.game.querySelector(tag)
-  // }
-
-  // getAll(tag) {
-  //   return this.game.querySelectorAll(tag)
-  // }
-
   getObjectsByType(type) {
     return this.G.objects.filter(obj => obj.type === type);
   }
@@ -34,10 +26,6 @@ export default class HGML {
       }
     }
     return null;
-  }
-
-  addFunction(type) {
-    const objects = this.getObjectsByType(type);
   }
 
   static createObject(e, hgmlInstance) {
@@ -59,30 +47,6 @@ export default class HGML {
       const c = children[i];
       const type = c.tagName;
       console.log(type);
-
-      // !!! WORKING ONE !!!
-
-      // if (type === 'METHOD') {
-      //   let methodName = null;
-  
-      //   for (const attr of c.attributes) {
-      //     if (attr.name === 'name') {
-      //       methodName = attr.value;
-      //       break;
-      //     }
-      //   }
-
-      //   if (methodName) {
-      //     const methodLogic = c.getAttribute('action') || `console.log('Method ${methodName} executed')`;
-  
-      //     // Dynamically create method and bind HGML instance as an argument
-      //     obj[methodName] = function () {
-      //       const hgml = hgmlInstance; // Reference to HGML instance
-      //       return new Function("hgml", methodLogic).call(this, hgml);
-      //     };
-      //   }
-
-      // }
 
       if (type === 'METHOD') {
         let methodName = null;
@@ -124,7 +88,6 @@ export default class HGML {
         }
       }
 
-
     }
 
     return obj;
@@ -163,42 +126,168 @@ export default class HGML {
     return this.G;
   }
 
+  // startGameLoop(updateCallback, renderCallback) {
+  //   this.G.running = true;
+
+  //   const loop = (timestamp) => {
+  //     if (!this.G.running) return;
+
+  //     const deltaTime = timestamp - this.G.lastFrameTime;
+  //     this.G.deltaTime = deltaTime;
+  //     this.G.lastFrameTime = timestamp;
+
+  //     const fps = 1000/deltaTime;
+  //     //console.log(`FPS: ${fps.toFixed(2)}`);
+
+  //     if (typeof updateCallback === "function") {
+  //       for (const obj of this.G.objects) {
+  //         updateCallback(obj, deltaTime);
+  //       }
+  //     }
+
+  //     this.G.ctx.clearRect(0, 0, this.G.instance.width, this.G.instance.height);
+
+  //     if (typeof renderCallback === "function") {
+  //       for (const obj of this.G.objects) {
+  //         renderCallback(obj, this.G.ctx);
+  //       }
+  //     }
+
+  //     requestAnimationFrame(loop);
+  //   };
+
+  //   this.G.lastFrameTime = performance.now();
+  //   requestAnimationFrame(loop); 
+  // }
+
   startGameLoop(updateCallback, renderCallback) {
     this.G.running = true;
-
+  
     const loop = (timestamp) => {
       if (!this.G.running) return;
-
+  
       const deltaTime = timestamp - this.G.lastFrameTime;
       this.G.deltaTime = deltaTime;
       this.G.lastFrameTime = timestamp;
-
-      const fps = 1000/deltaTime;
-      //console.log(`FPS: ${fps.toFixed(2)}`);
-
-      if (typeof updateCallback === "function") {
-        for (const obj of this.G.objects) {
-          updateCallback(obj, deltaTime);
+  
+      const solidObjects = this.G.objects.filter(obj => obj.solid); // Identify solid objects
+  
+      for (const movingObj of this.G.objects) {
+        // Skip objects that are solid (not moving)
+        if (movingObj.solid) continue;
+  
+        // Update the object via the callback
+        if (typeof updateCallback === "function") {
+          updateCallback(movingObj, deltaTime);
+        }
+  
+        // Check for collisions with solid objects
+        for (const staticObj of solidObjects) {
+          if (this.checkCollision(movingObj, staticObj)) {
+            this.resolveCollision(movingObj, staticObj); // Resolve overlap
+          }
         }
       }
-
+  
+      // Clear the canvas
       this.G.ctx.clearRect(0, 0, this.G.instance.width, this.G.instance.height);
-
+  
+      // Render each object
       if (typeof renderCallback === "function") {
         for (const obj of this.G.objects) {
           renderCallback(obj, this.G.ctx);
         }
       }
-
+  
       requestAnimationFrame(loop);
     };
-
+  
     this.G.lastFrameTime = performance.now();
-    requestAnimationFrame(loop); 
+    requestAnimationFrame(loop);
   }
 
   stopGameLoop() {
     this.G.running = false;
+  }
+
+  resetGame() {
+    // Clear the current game state
+    this.G.objects = [];
+    this.G.running = false;
+    this.G.lastFrameTime = 0;
+    this.G.deltaTime = 0;
+  
+    // Reinitialize game objects and options
+    const gameElements = this.game.children;
+    for (const element of gameElements) {
+      const obj = HGML.createObject(element, this);
+      this.G.objects.push(obj);
+    }
+  
+    const options = HGML.createObject(this.game, this);
+  
+    // Reset canvas
+    const gameCanvas = this.G.instance;
+    gameCanvas.width = options.w || 800;
+    gameCanvas.height = options.h || 600;
+    this.G.ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+  
+    // Reset options
+    this.G.options = options;
+  
+    console.log("Game has been reset!");
+  }
+
+  checkCollision(movingObj, staticObj) {
+    // Define bounding boxes
+    const movingBox = {
+      left: movingObj.x,
+      right: movingObj.x + movingObj.w,
+      top: movingObj.y,
+      bottom: movingObj.y + movingObj.h,
+    };
+  
+    const staticBox = {
+      left: staticObj.x,
+      right: staticObj.x + staticObj.w,
+      top: staticObj.y,
+      bottom: staticObj.y + staticObj.h,
+    };
+  
+    // Check if boxes overlap
+    if (
+      movingBox.right > staticBox.left &&
+      movingBox.left < staticBox.right &&
+      movingBox.bottom > staticBox.top &&
+      movingBox.top < staticBox.bottom
+    ) {
+      return true; // Collision detected
+    }
+  
+    return false; // No collision
+  }
+
+  resolveCollision(movingObj, staticObj) {
+    const overlap = {
+      left: movingObj.x + movingObj.w - staticObj.x,
+      right: staticObj.x + staticObj.w - movingObj.x,
+      top: movingObj.y + movingObj.h - staticObj.y,
+      bottom: staticObj.y + staticObj.h - movingObj.y,
+    };
+  
+    // Determine the smallest overlap
+    const minOverlap = Math.min(overlap.left, overlap.right, overlap.top, overlap.bottom);
+  
+    // Adjust position based on the collision side
+    if (minOverlap === overlap.left) {
+      movingObj.x = staticObj.x - movingObj.w; // Move to the left
+    } else if (minOverlap === overlap.right) {
+      movingObj.x = staticObj.x + staticObj.w; // Move to the right
+    } else if (minOverlap === overlap.top) {
+      movingObj.y = staticObj.y - movingObj.h; // Move up
+    } else if (minOverlap === overlap.bottom) {
+      movingObj.y = staticObj.y + staticObj.h; // Move down
+    }
   }
 }
 
