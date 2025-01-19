@@ -13,33 +13,48 @@
 
     <sprite name="player" src="player.png"></sprite>
 
-    <player x="100" y="100" w="48" h="96" color="blue">
+    <player x="100" y="100" w="48" h="96" color="blue" speed="0.3">
       <!-- You can define methods directly inside the markup if you want-->
       <method name="moveLeft" action="
-        this.x -= 0.4 * hgml.G.deltaTime;">
+        this.x -= this.speed * hgml.G.deltaTime;">
       </method>
       <method name="moveUp" action="
-        this.y -= 0.4 * hgml.G.deltaTime;">
+        this.y -= this.speed * hgml.G.deltaTime;">
       </method>
       <method name="moveRight" action="
-        this.x += 0.4 * hgml.G.deltaTime;">
+        this.x += this.speed * hgml.G.deltaTime;">
       </method>
       <method name="moveDown" action="
-        this.y += 0.4 * hgml.G.deltaTime;">
+        this.y += this.speed * hgml.G.deltaTime;">
       </method>
       <method name="withParameters" parameters='["name", "age"]' action="
         console.log(`My name is ${name} and I am ${age} years old.`);">
       </method>
     </player>
 
-    <wall x="0" y="0" w="800" h="32" color="black" solid="true"></wall>
+    <wall x="0" y="0" w="800" h="64" color="black" solid="true"></wall>
     <wall x="0" y="0" w="32" h="600" color="black" solid="true"></wall>
     <wall x="768" y="0" w="32" h="600" color="black" solid="true"></wall>
     <wall x="0" y="568" w="800" h="32" color="black" solid="true"></wall>
     <wall x="384" y="0" w="32" h="448" color="black" solid="true"></wall>
+    <wall x="192" y="416" w="384" h="32" color="black" solid="true"></wall>
 
-    <enemy x="288" y="300" w="64" h="64" color="red"></enemy>
-    <enemy x="448" y="300" w="64" h="64" color="red"></enemy>
+    <enemy x="288" y="300" w="64" h="64" color="red" direction="1" prevX="0" speed="0.2">
+      <method name="moveToRandomDirection" action="
+        const nextX = this.x + this.direction * this.speed * hgml.G.deltaTime;
+
+        const collides = hgml.G.objects.some(obj => obj.solid && hgml.checkCollision({ ...this, x: nextX }, obj));
+    
+        if (collides) {
+          this.direction *= -1;
+        } else {
+          this.prevX = this.x;
+          this.x = nextX;
+        }
+        ">
+      </method>
+    </enemy>
+    <!-- <enemy x="448" y="300" w="64" h="64" color="red"></enemy> -->
 
     <coin x="400" y="400" w="32" h="32" color="yellow">
       <method name="pickRandomPosition" action="
@@ -48,9 +63,19 @@
         const maxY = hgml.G.options.h - this.h;
         const minY = this.h;
         this.x = Math.floor(Math.random() * (maxX - minX + 1)) + minX;
-        this.y = Math.floor(Math.random() * (maxY - minY + 1)) + minY;">
+        this.y = Math.floor(Math.random() * (maxY - minY + 1)) + minY;
+        ">
       </method>
     </coin>
+
+    <scoreboard x="192" y="8" w="416" h="48" color="gray" solid="false" score="0">
+      <method name="showScore" action="
+        hgml.G.ctx.font = '36px serif';
+        hgml.G.ctx.fillStyle = '#fff';
+        hgml.G.ctx.fillText(this.score, this.x+(this.w/2), this.y+32);
+      ">
+    </method>
+    </scoreboard>
   </game>
 
 </body>
@@ -74,19 +99,19 @@ document.addEventListener("keydown", (e) => {
     hgml.resetGame();
     console.log(hgml.getState());
     coin = hgml.getObjectByType("COIN");
-    let enemies = hgml.getAllObjectsByType("ENEMY");
-    enemies.forEach((enemy) => {
-        enemy.moveToRandomDirection = function(deltaTime) {
-        this.x += 0.4 * deltaTime;
-      }
-    });
+    scoreboard = hgml.getObjectByType("SCOREBOARD");
+    player = hgml.getObjectByType("PLAYER");
+    // let enemies = hgml.getAllObjectsByType("ENEMY");
+    // enemies.forEach((enemy) => {
+    //     enemy.moveToRandomDirection = function(deltaTime) {
+    //     this.x += 0.4 * deltaTime;
+    //   }
+    // });
 
     hgml.startGameLoop();
   }
 });
 
-let coin = null;
-let playerSprite = null;
 const hgml = new HGML();
 
 
@@ -95,19 +120,25 @@ hgml.startGameLoop();
 
 console.log(hgml.getState());
 
-coin = hgml.getObjectByType("COIN");
-playerSprite = hgml.getSprite("player");
+let coin = hgml.getObjectByType("COIN");
+let scoreboard = hgml.getObjectByType("SCOREBOARD");
+let player = hgml.getObjectByType("PLAYER");
+
+let playerSprite = hgml.getSprite("player");
+
 
 // another way to add methods to objects
 // note that if you add methods this way you have to add them again when you reset game state
-let enemies = hgml.getAllObjectsByType("ENEMY");
-enemies.forEach((enemy) => {
-    enemy.moveToRandomDirection = function(deltaTime) {
-    this.x += 1 * deltaTime;
-  }
-});
+// let enemies = hgml.getAllObjectsByType("ENEMY");
+// enemies.forEach((enemy) => {
+//     enemy.moveToRandomDirection = function(deltaTime) {
+//     this.x += 1 * deltaTime;
+//   }
+// });
 
 hgml.setUpdate((obj, deltaTime) => {
+  // console.log(`Updating ${obj.type}: x=${obj.x}, y=${obj.y}`);
+  
   if (obj.type === "PLAYER") {
     if (keys['ArrowLeft']) {
       obj.moveLeft(deltaTime);
@@ -124,24 +155,25 @@ hgml.setUpdate((obj, deltaTime) => {
 
     if (hgml.checkCollision(obj, coin)) {
       coin.pickRandomPosition();
+      scoreboard.score += 100;
     }
   }
 
   if (obj.type === "ENEMY") {
-    obj.moveToRandomDirection(deltaTime);
+    obj.moveToRandomDirection();
   }
 });
 
 hgml.setRender((obj, ctx) => {
   if (obj.type === "PLAYER") {
     ctx.drawImage(playerSprite, obj.x, obj.y, obj.w, obj.h);
-  } /*else if (obj.type === "COIN") {
-    ctx.beginPath();
-    ctx.arc(95, 50, 40, 0, 2 * Math.PI);
-    ctx.stroke();
-  }*/ else {
+  } else {
     ctx.fillStyle = obj.color || '#000';
     ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
+  }
+
+  if (obj.type === "SCOREBOARD") {
+    obj.showScore();
   }
 });
 

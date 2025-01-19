@@ -67,9 +67,12 @@ export default class HGML {
 
     // Process attributes as object's values
     for (const attr of e.attributes) {
+      console.log(`Creating object: ${e.tagName}, x=${e.getAttribute('x')}`);
+
       const name = attr.name;
+      console.log(typeof attr.value);
       const value = isNaN(attr.value) ? attr.value : parseFloat(attr.value);
-  
+
       obj[name] = value;
     }
 
@@ -283,6 +286,7 @@ export default class HGML {
     const gameCanvas = this.G.instance;
     gameCanvas.width = options.w || 800;
     gameCanvas.height = options.h || 600;
+    this.G.ctx.imageSmoothingEnabled = false;
     this.G.ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
   
     // Reset options
