@@ -12,6 +12,7 @@
   <game w="800" h="600">
 
     <player x="100" y="100" w="32" h="32" color="blue">
+      <!-- You can define methods directly inside the markup if you want-->
       <method name="moveLeft" action="
         this.x -= 0.4 * hgml.G.deltaTime;">
       </method>
@@ -23,6 +24,9 @@
       </method>
       <method name="moveDown" action="
         this.y += 0.4 * hgml.G.deltaTime;">
+      </method>
+      <method name="withParameters" parameters='["name", "age"]' action="
+        console.log(`My name is ${name} and I am ${age} years old.`);">
       </method>
     </player>
 
@@ -66,7 +70,8 @@ function update(obj, deltaTime) {
     }
     if (keys['ArrowDown']) {
       obj.moveDown(deltaTime);
-    }
+    } 
+    obj.withParameters("Otto Heiskanen", 26);
   }
 }
 

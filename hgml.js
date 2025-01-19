@@ -60,35 +60,70 @@ export default class HGML {
       const type = c.tagName;
       console.log(type);
 
+      // !!! WORKING ONE !!!
+
+      // if (type === 'METHOD') {
+      //   let methodName = null;
+  
+      //   for (const attr of c.attributes) {
+      //     if (attr.name === 'name') {
+      //       methodName = attr.value;
+      //       break;
+      //     }
+      //   }
+
+      //   if (methodName) {
+      //     const methodLogic = c.getAttribute('action') || `console.log('Method ${methodName} executed')`;
+  
+      //     // Dynamically create method and bind HGML instance as an argument
+      //     obj[methodName] = function () {
+      //       const hgml = hgmlInstance; // Reference to HGML instance
+      //       return new Function("hgml", methodLogic).call(this, hgml);
+      //     };
+      //   }
+
+      // }
+
       if (type === 'METHOD') {
         let methodName = null;
-  
+        let parameters = [];
+      
+        // Extract method name and parameters
         for (const attr of c.attributes) {
           if (attr.name === 'name') {
             methodName = attr.value;
-            break;
+          } else if (attr.name === 'parameters') {
+            // Parse the parameters attribute (assumes a JSON-like array format)
+            try {
+              parameters = JSON.parse(attr.value); // Parse the JSON string
+            } catch (err) {
+              console.error(`Invalid JSON in parameters attribute: ${attr.value}`, err);
+              parameters = []; // Default to an empty array
+            }
           }
         }
-  
-        // if (methodName) {
-        //   // obj[methodName] = function () {
-        //   //   console.log(`Method '${methodName}' called on`, obj);
-        //   // };
-        //   const methodLogic = c.getAttribute('action') || `console.log('Method ${methodName} executed')`;
-        //   obj[methodName] = new Function(methodLogic);
-        // }
-
+      
         if (methodName) {
           const methodLogic = c.getAttribute('action') || `console.log('Method ${methodName} executed')`;
-  
-          // Dynamically create method and bind HGML instance as an argument
-          obj[methodName] = function () {
+        
+          // Dynamically create the method and bind HGML instance
+          obj[methodName] = function (...args) {
             const hgml = hgmlInstance; // Reference to HGML instance
-            return new Function("hgml", methodLogic).call(this, hgml);
+        
+            // Dynamically create the function with or without parameters
+            if (parameters.length > 0) {
+              // If parameters exist, pass them dynamically
+              const methodFunction = new Function(...parameters, "hgml", methodLogic);
+              return methodFunction.apply(this, [...args, hgml]);
+            } else {
+              // If no parameters, include only the hgml reference
+              const methodFunction = new Function("hgml", methodLogic);
+              return methodFunction.call(this, hgml);
+            }
           };
         }
-
       }
+
 
     }
 
