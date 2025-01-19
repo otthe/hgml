@@ -32,11 +32,24 @@
 
     <wall x="0" y="0" w="800" h="32" color="black" solid="true"></wall>
     <wall x="0" y="0" w="32" h="600" color="black" solid="true"></wall>
-    <wall x="400" y="200" w="32" h="32" color="black" solid="true"></wall>
+    <wall x="768" y="0" w="32" h="600" color="black" solid="true"></wall>
+    <wall x="0" y="568" w="800" h="32" color="black" solid="true"></wall>
+    <wall x="384" y="0" w="32" h="448" color="black" solid="true"></wall>
 
     <enemy x="300" y="300" w="64" h="64" color="red"></enemy>
 
-    <item x="400" y="400" w="32" h="32" color="yellow"></item>
+    <item x="400" y="400" w="32" h="32" color="yellow">
+      <method name="pickRandomPosition" action="
+        const maxX = hgml.G.options.w - this.w;
+        const minX = this.w;
+    
+        const maxY = hgml.G.options.h - this.h;
+        const minY = this.h;
+    
+        this.x = Math.floor(Math.random() * (maxX - minX + 1)) + minX;
+        this.y = Math.floor(Math.random() * (maxY - minY + 1)) + minY;">
+      </method>
+    </item>
 
   </game>
 
@@ -48,7 +61,6 @@ import HGML from './hgml.js';
 const hgml = new HGML().init();
 console.log(hgml.getState());
 
-
 const keys = {};
 document.addEventListener('keydown', (e) => {
   keys[e.key] = true; 
@@ -56,6 +68,8 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('keyup', (e) => {
   keys[e.key] = false;
 });
+
+let item = hgml.getObjectByType("ITEM");
 
 function update(obj, deltaTime) {
   if (obj.type === "PLAYER") {
@@ -72,6 +86,17 @@ function update(obj, deltaTime) {
       obj.moveDown(deltaTime);
     } 
     //obj.withParameters("Jane Doe", 26);
+
+    if (hgml.checkCollision(obj, item)) {
+      item.pickRandomPosition();
+    }
+  }
+
+  if (obj.type === "WALL") {
+    console.log("prkl.!")
+    if (hgml.checkCollision(obj, item)) {
+      item.pickRandomPosition();
+    }
   }
 }
 
@@ -85,6 +110,7 @@ document.addEventListener("keydown", (e) => {
     console.log("Resetting the game...");
     hgml.resetGame();
     console.log(hgml.getState());
+    item = hgml.getObjectByType("ITEM");
     hgml.startGameLoop(update,render);
   }
 });
