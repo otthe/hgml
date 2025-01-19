@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HGML test</title>
+  <script defer src="hgml.js" type="module"></script>
+</head>
+<style>
+  canvas {
+    background-color: lightblue;
+  }
+</style>
+<body>
+  <game w="800" h="600">
+
+    <player x="100" y="100" w="32" h="32" color="blue"></player>
+
+    <wall x="200" y="200" w="32" h="32" color="black" static="true"></wall>
+    <wall x="300" y="200" w="32" h="32" color="black"></wall>
+    <wall x="400" y="200" w="32" h="32" color="black"></wall>
+
+    <enemy x="300" y="300" w="64" h="64" color="red"></enemy>
+
+    <item x="400" y="400" w="32" h="32" color="yellow"></item>
+
+    <!-- <logic>
+      <rule>Here some really simple dsl?</rule>
+    </logic> -->
+    <!-- <script>
+      console.log("Moro!");
+    </script> -->
+
+  </game>
+</body>
+
+<script type="module">
+import HGML from './hgml.js';
+
+const hgml = new HGML().init();
+console.log(hgml.getState());
+
+// function update(G, deltaTime) {
+//   for (const obj of G.objects) {
+//     if (obj.x !== undefined) {
+//       obj.x += 0.1 * deltaTime; 
+//     }
+//   }
+// }
+
+// function render(G, ctx) {
+//   for (const obj of G.objects) {
+//     if (obj.x !== undefined && obj.y !== undefined && obj.w !== undefined && obj.h !== undefined) {
+//       ctx.fillStyle = obj.color || '#000';
+//       ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
+//     }
+//   }
+// }
+
+function update(obj, deltaTime) {
+  if (!obj.static) {
+    obj.x += 0.1 * deltaTime;
+  }
+}
+
+function render(obj, ctx) {
+  ctx.fillStyle = obj.color || '#000';
+  ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
+}
+
+hgml.startGameLoop(update, render);
+</script>
+
+</html>

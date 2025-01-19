@@ -1,0 +1,1 @@
+# Hypergame markup language
