@@ -12,17 +12,18 @@
   <game w="800" h="600">
 
     <player x="100" y="100" w="32" h="32" color="blue">
-      <method name="moveLeft"></method>
-      <method name="moveRight"></method>
-      <method name="moveUp"></method>
+      <method name="moveLeft" action="
+        this.x -= 0.4 * hgml.G.deltaTime;">
+      </method>
+      <method name="moveUp" action="
+        this.y -= 0.4 * hgml.G.deltaTime;">
+      </method>
+      <method name="moveRight" action="
+        this.x += 0.4 * hgml.G.deltaTime;">
+      </method>
       <method name="moveDown" action="
-        // INLINE METHODS CAN ACCESS GAME INSTANCE PROPERTIES with 'hgml'
-        // FOR EXAMPLE: console.log(hgml.G);
-        this.y -= 5;
-        if (this.y < 0) {
-          this.y = 600
-        }
-      "></method>
+        this.y += 0.4 * hgml.G.deltaTime;">
+      </method>
     </player>
 
     <wall x="200" y="200" w="32" h="32" color="black"></wall>
@@ -43,10 +44,29 @@ import HGML from './hgml.js';
 const hgml = new HGML().init();
 console.log(hgml.getState());
 
+
+const keys = {};
+document.addEventListener('keydown', (e) => {
+  keys[e.key] = true; 
+});
+document.addEventListener('keyup', (e) => {
+  keys[e.key] = false;
+});
+
 function update(obj, deltaTime) {
   if (obj.type === "PLAYER") {
-    //obj.x += 0.1 * deltaTime;
-    obj.moveDown();
+    if (keys['ArrowLeft']) {
+      obj.moveLeft(deltaTime);
+    }
+    if (keys['ArrowRight']) {
+      obj.moveRight(deltaTime);
+    }
+    if (keys['ArrowUp']) {
+      obj.moveUp(deltaTime);
+    }
+    if (keys['ArrowDown']) {
+      obj.moveDown(deltaTime);
+    }
   }
 }
 

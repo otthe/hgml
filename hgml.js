@@ -10,19 +10,30 @@ export default class HGML {
       instance: null,
       running: false,
       lastFrameTime: 0,
+      deltaTime: 0
     };
   }
 
-  get(tag) {
-    return this.game.querySelector(tag)
-  }
+  // get(tag) {
+  //   return this.game.querySelector(tag)
+  // }
 
-  getAll(tag) {
-    return this.game.querySelectorAll(tag)
-  }
+  // getAll(tag) {
+  //   return this.game.querySelectorAll(tag)
+  // }
 
   getObjectsByType(type) {
     return this.G.objects.filter(obj => obj.type === type);
+  }
+
+  getObjectByType(type) {
+    for (let i = 0; i < this.G.objects.length; i++) {
+      const o = this.G.objects[i];
+      if (o.type === type) {
+        return o;
+      }
+    }
+    return null;
   }
 
   addFunction(type) {
@@ -42,6 +53,7 @@ export default class HGML {
     }
 
     // Process children with the name 'METHOD' as object methods
+    // also pass reference to this class instance to the methods
     const children = e.children;
     for (let i = 0; i < children.length; i++) {
       const c = children[i];
@@ -123,6 +135,7 @@ export default class HGML {
       if (!this.G.running) return;
 
       const deltaTime = timestamp - this.G.lastFrameTime;
+      this.G.deltaTime = deltaTime;
       this.G.lastFrameTime = timestamp;
 
       const fps = 1000/deltaTime;
