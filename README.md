@@ -63,3 +63,8 @@ method(s) --> as child
 checkCollision(obj1, obj2) --> check if objects are colliding
 
 getState() --> returns information about HGML instance
+
+
+# Things to consider
+If you are trying to add object to a position where solid object resides,
+you must explicitly add `solid="false"` -property to that object. Otherwise it will be automatically placed into position outside of solid object's area.

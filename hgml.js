@@ -242,137 +242,10 @@ export default class HGML {
     return this.G;
   }
 
-  // startGameLoop() {
-  //   if (this.G.running) {
-  //     console.warn("A game loop is already running! Aborting start.");
-  //     return;
-  //   }
-
-  //   this.activeLoops++;
-  //   console.log("Starting a new game loop. Active loops:", this.activeLoops);
-
-  //   this.G.running = true;
-
-  //   const MAX_DELTA_TIME = 1000 / 60;
-
-  //   const loop = (timestamp) => {
-  //     if (!this.G.running) {
-  //       this.activeLoops--;
-  //       console.log("Exiting game loop. Active loops:", this.activeLoops);
-  //       return;
-  //     }
-
-  //     if (this.G.lastFrameTime === null) {
-  //       this.G.lastFrameTime = timestamp;
-  //     }
-
-  //     let deltaTime = timestamp - this.G.lastFrameTime;
-  //     this.G.lastFrameTime = timestamp;
-
-  //     deltaTime = Math.min(deltaTime, MAX_DELTA_TIME);
-  //     this.G.deltaTime = deltaTime;
-
-  //     //console.log("DeltaTime:", deltaTime);
-
-  //     const solidObjects = this.G.objects.filter(obj => obj.solid); // Identify solid objects
-  
-  //     for (const obj of this.G.objects) {
-  //       if (obj.solid) continue;
-  
-  //       // Update the object via the callback
-  //       this.update(obj, deltaTime);
-  
-  //       // Check for collisions with solid objects
-  //       for (const staticObj of solidObjects) {
-  //         if (this.checkCollision(obj, staticObj)) {
-  //           this.resolveCollision(obj, staticObj); // Resolve overlap
-  //         }
-  //       }
-  //     }
-  
-  //     // Clear the canvas
-  //     this.G.ctx.clearRect(0, 0, this.G.instance.width, this.G.instance.height);
-  
-  //     // Render each object
-  //     for (const obj of this.G.objects) {
-  //       this.render(obj, this.G.ctx);
-  //     }
-
-  //     this.G.loopId = requestAnimationFrame(loop);
-  //   };
-
-  //   this.G.lastFrameTime = null;
-  //   this.G.loopId = requestAnimationFrame(loop);
-  // }
-
-  // startGameLoop() {
-  //   this.G.running = true;
-  
-  //   const MAX_DELTA_TIME = 1000 / 60;
-
-
-
-  //   const loop = (timestamp) => {
-  //     if (!this.G.running) return;
-  
-  //     // Reset lastFrameTime to the current timestamp if it's null
-  //     if (this.G.lastFrameTime === null) {
-  //       this.G.lastFrameTime = timestamp;
-  //     }
-
-  //     let deltaTime = timestamp - this.G.lastFrameTime;
-  //     this.G.lastFrameTime = timestamp;
-  
-  //     deltaTime = Math.min(deltaTime, MAX_DELTA_TIME);
-
-  //     this.G.deltaTime = deltaTime;
-
-  //     const solidObjects = this.G.objects.filter(obj => obj.solid); // Identify solid objects
-  
-  //     for (const obj of this.G.objects) {
-  //       if (obj.solid) continue;
-  
-  //       // Update the object via the callback
-  //       this.update(obj, deltaTime);
-  
-  //       // Check for collisions with solid objects
-  //       for (const staticObj of solidObjects) {
-  //         if (this.checkCollision(obj, staticObj)) {
-  //           this.resolveCollision(obj, staticObj); // Resolve overlap
-  //         }
-  //       }
-  //     }
-  
-  //     // Clear the canvas
-  //     this.G.ctx.clearRect(0, 0, this.G.instance.width, this.G.instance.height);
-  
-  //     // Render each object
-  //     for (const obj of this.G.objects) {
-  //       this.render(obj, this.G.ctx);
-  //     }
-
-  
-  //     this.G.loopId = requestAnimationFrame(loop);
-  //   };
-  
-  //   // this.G.lastFrameTime = performance.now();
-  //   this.G.lastFrameTime = null;
-  //   this.G.loopId = requestAnimationFrame(loop);
-  // }
-
-  // stopGameLoop() {
-  //   this.G.running = false;
-  //   if (this.G.loopId) {
-  //     console.log("meneekö tänne asti?");
-  //     cancelAnimationFrame(this.G.loopId); 
-  //     this.G.loopId = null;
-  //   }
-  // }
-
   startGameLoop() {
     if (this.G.running) {
-        console.warn("A game loop is already running!");
-        return;
+      console.warn("A game loop is already running!");
+      return;
     }
 
     this.G.running = true;
@@ -382,39 +255,39 @@ export default class HGML {
     const MAX_DELTA_TIME = 1000 / 60;
 
     const loop = (timestamp) => {
-        if (!this.G.running || this.G.currentLoopId !== currentLoopId) {
-            return; // Abort if stopped or a new loop has started
-        }
+      if (!this.G.running || this.G.currentLoopId !== currentLoopId) {
+        return; // Abort if stopped or a new loop has started
+      }
 
-        if (this.G.lastFrameTime === null) {
-            this.G.lastFrameTime = timestamp;
-        }
-
-        let deltaTime = timestamp - this.G.lastFrameTime;
+      if (this.G.lastFrameTime === null) {
         this.G.lastFrameTime = timestamp;
+      }
 
-        deltaTime = Math.min(deltaTime, MAX_DELTA_TIME);
-        this.G.deltaTime = deltaTime;
+      let deltaTime = timestamp - this.G.lastFrameTime;
+      this.G.lastFrameTime = timestamp;
 
-        // Your game loop logic
-        const solidObjects = this.G.objects.filter(obj => obj.solid);
-        for (const obj of this.G.objects) {
-            if (!obj.solid) {
-                this.update(obj, deltaTime);
-                for (const staticObj of solidObjects) {
-                    if (this.checkCollision(obj, staticObj)) {
-                        this.resolveCollision(obj, staticObj);
-                    }
-                }
+      deltaTime = Math.min(deltaTime, MAX_DELTA_TIME);
+      this.G.deltaTime = deltaTime;
+
+      // Your game loop logic
+      const solidObjects = this.G.objects.filter(obj => obj.solid);
+      for (const obj of this.G.objects) {
+        if (!obj.solid) {
+          this.update(obj, deltaTime);
+          for (const staticObj of solidObjects) {
+            if (this.checkCollision(obj, staticObj)) {
+              this.resolveCollision(obj, staticObj);
             }
+          }
         }
+      }
 
-        this.G.ctx.clearRect(0, 0, this.G.instance.width, this.G.instance.height);
-        for (const obj of this.G.objects) {
-            this.render(obj, this.G.ctx);
-        }
+      this.G.ctx.clearRect(0, 0, this.G.instance.width, this.G.instance.height);
+      for (const obj of this.G.objects) {
+        this.render(obj, this.G.ctx);
+      }
 
-        this.G.loopId = requestAnimationFrame(loop); // Schedule next frame
+      this.G.loopId = requestAnimationFrame(loop); // Schedule next frame
     };
 
     this.G.lastFrameTime = null;
@@ -423,18 +296,16 @@ export default class HGML {
 
   stopGameLoop() {
     if (this.G.running) {
-        console.log("Stopping the game loop...");
-        this.G.running = false;
+      console.log("Stopping the game loop...");
+      this.G.running = false;
 
-        if (this.G.loopId) {
-            cancelAnimationFrame(this.G.loopId);
-            this.G.loopId = null;
-        }
+      if (this.G.loopId) {
+        cancelAnimationFrame(this.G.loopId);
+        this.G.loopId = null;
+      }
 
-        // Ensure lastFrameTime is reset
-        this.G.lastFrameTime = null;
-
-        console.log("Game loop stopped.");
+      // Ensure lastFrameTime is reset
+      this.G.lastFrameTime = null;
     }
   }
 

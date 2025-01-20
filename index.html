@@ -9,6 +9,12 @@
   <game w="360" h="650">
     <sprite name="bird" src="bird.png"></sprite>
 
+    <!-- 
+      Methods have access to the hgml instance,
+      so instead of using parameter for deltaTime and ctx
+      like in methods defined below, you could just use
+      'hgml.G.deltaTime' or 'hgml.G.ctx' inside the method.
+    -->
     <bird x="128" y="360" w="96" h="64" velocity="-7">
       <method name="jump" parameters='["deltaTime"]' action="
         this.velocity = -7;
@@ -70,31 +76,12 @@
     const hgml = new HGML();
     await hgml.init()
     hgml.startGameLoop();
-    console.log(hgml.getState());
 
     hgml.listen('keyup', (event) => {
       if (event.code === 'Space') {
         hgml.getObjectByType("BIRD").jump(hgml.G.deltaTime);
       }
     });
-
-    let tries = 0;
-
-    function restart() {
-      hgml.stopGameLoop();
-      cancelAnimationFrame(hgml.G.loopId);
-      hgml.resetGame();
-
-      const bird = hgml.getObjectByType("BIRD");
-      if (bird) {
-        bird.velocity = -7; // Reset to initial velocity
-        bird.rotation = 0;  // Reset rotation
-        bird.y = 360;       // Reset to initial position
-      }
-      hgml.startGameLoop();
-      console.log("DeltaTime:", hgml.G.deltaTime);
-      tries++;
-    }
   
     hgml.setUpdate((obj, deltaTime) => {
       if (obj.type === "BIRD") {
@@ -104,17 +91,10 @@
 
         hgml.getAllObjectsByType("PIPE").forEach((pipe) => {
           if (hgml.checkCollision(obj, pipe)) {
-            console.log("pipe collision");
-            //hgml.stopGameLoop();
-            console.log("DeltaTime:", hgml.G.deltaTime);
-            restart();
+            hgml.resetGame();
+            hgml.startGameLoop();
           }
         });
-
-        //if (tries === 0) {
-          //console.log("DeltaTime:", hgml.G.deltaTime);
-        //}
-        //console.log("DeltaTime:", hgml.G.deltaTime);
       }
     });
   
@@ -133,5 +113,3 @@
   </script>
 </body>
 </html>
-
-
