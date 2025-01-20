@@ -5,7 +5,7 @@ export default class HGML {
     
     this.G = {
       objects: [],
-      options: null,
+      globals: null,
       ctx: null,
       instance: null,
       running: false,
@@ -282,19 +282,19 @@ export default class HGML {
       this.G.objects.push(obj);
     }
 
-    const options = HGML.createObject(this.game, this);
+    const globals = HGML.createObject(this.game, this);
 
     const gameCanvas = document.createElement("canvas");
     gameCanvas.setAttribute("id", "hgml");
-    gameCanvas.width = options.w || 800;
-    gameCanvas.height = options.h || 600; 
+    gameCanvas.width = globals.w || 800;
+    gameCanvas.height = globals.h || 600; 
     gameCanvas.style.backgroundColor = '#7cb7d9'
 
     const ctx = gameCanvas.getContext("2d");
     ctx.imageSmoothingEnabled = false;
 
     this.G.instance = gameCanvas;
-    this.G.options = options;
+    this.G.globals = globals;
     this.G.ctx = ctx;
     this.G.id = gameCanvas.id;
 
@@ -390,17 +390,17 @@ export default class HGML {
       this.G.objects.push(obj);
     }
   
-    const options = HGML.createObject(this.game, this);
+    const globals = HGML.createObject(this.game, this);
   
     // Reset canvas
     const gameCanvas = this.G.instance;
-    gameCanvas.width = options.w || 800;
-    gameCanvas.height = options.h || 600;
+    gameCanvas.width = globals.w || 800;
+    gameCanvas.height = globals.h || 600;
     this.G.ctx.imageSmoothingEnabled = false;
     this.G.ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
   
     // Reset options
-    this.G.options = options;
+    this.G.globals = globals;
   
     console.log("Game has been reset!");
   }

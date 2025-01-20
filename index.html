@@ -46,7 +46,7 @@
       </method>
 
       <method name="checkBounds" action="
-        const gameHeight = hgml.getState().options.h;
+        const gameHeight = hgml.getState().globals.h;
         if ((this.y > gameHeight - this.h) || (this.y < 0)) {
           hgml.resetGame();
         }">
@@ -123,10 +123,10 @@
             hgml.resetGame();
           }
 
-          if (obj.x > (pipe.x + (pipe.w/2)) && !hgml.G.options.scoreCollected) {
+          if (obj.x > (pipe.x + (pipe.w/2)) && !hgml.G.globals.scoreCollected) {
             hgml.getObjectByType("SCOREBOARD").score++;
             hgml.getSound("bling").play();
-            hgml.G.options.scoreCollected = true;
+            hgml.G.globals.scoreCollected = true;
           }
 
         });
@@ -136,12 +136,12 @@
 
         // If the pipe moves off-screen, reset its position and randomize height
         if (obj.x < -obj.w) {
-          hgml.G.options.scoreCollected = false;
-          obj.x = hgml.G.options.w;
+          hgml.G.globals.scoreCollected = false;
+          obj.x = hgml.G.globals.w;
 
           // Find the pair (top and bottom pipes) and set their heights
           const gapHeight = 240; // Gap height between top and bottom pipe
-          const topHeight = Math.random() * (hgml.G.options.h - gapHeight - 200); // Random height with padding
+          const topHeight = Math.random() * (hgml.G.globals.h - gapHeight - 200); // Random height with padding
           const bottomY = topHeight + gapHeight;
 
           hgml.getAllObjectsByType("PIPE").forEach((pipe) => {
@@ -150,7 +150,7 @@
               pipe.h = topHeight;
             } else if (pipe.position === "bottom") {
               pipe.y = bottomY;
-              pipe.h = hgml.G.options.h - bottomY;
+              pipe.h = hgml.G.globals.h - bottomY;
             }
           });
         }
@@ -179,7 +179,7 @@
         var textString = `SCORE: ${obj.score}`,
             textWidth = ctx.measureText(textString ).width;
 
-        ctx.fillText(textString , (hgml.G.options.w/2) - (textWidth / 2), 32);
+        ctx.fillText(textString , (hgml.G.globals.w/2) - (textWidth / 2), 32);
       }
     });
   
