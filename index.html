@@ -9,10 +9,10 @@
   <game w="360" h="650">
     <sprite name="bird" src="bird.png"></sprite>
 
-    <bird x="128" y="360" w="96" h="64" velocity="7">
-      <method name="jump" action="
-        this.y -= 0.5 * hgml.G.deltaTime;
-        this.velocity = -7;">
+    <bird x="128" y="360" w="96" h="64" velocity="-7">
+      <method name="jump" parameters='["deltaTime"]' action="
+        this.velocity = -7;
+        this.y -= 0.5 * deltaTime;">
       </method>
 
       <method name="rotate" action="
@@ -39,21 +39,30 @@
       </method>
 
       <method name="checkBounds" action="
-      const gameHeight = hgml.getState().options.h;
-      if (this.y > gameHeight - this.h) {
-        this.y = gameHeight - this.h;
-        this.velocity = 0; 
-      }
+        const gameHeight = hgml.getState().options.h;
+        if (this.y > gameHeight - this.h) {
+          this.y = gameHeight - this.h;
+          this.velocity = 0; 
+        }
 
-      if (this.y < 0) {
-        this.y = 0;
-        this.velocity = 0;
-      }">
-    </method>
+        if (this.y < 0) {
+          this.y = 0;
+          this.velocity = 0;
+        }">
+      </method>
+
+      <method name="fall" parameters='["deltaTime"]' action="
+        const GRAVITY = 0.5;
+        const MAX_FALL_SPEED = 10;
+        this.velocity = (this.velocity || 0) + GRAVITY * (deltaTime / 16.67);
+        this.velocity = Math.min(this.velocity, MAX_FALL_SPEED);
+        this.y += this.velocity">
+      </method>
 
     </bird>
 
-    <pipe></pipe>
+    <pipe x="170" y="0" w="64" h="170" color="#07911f"></pipe>
+    <pipe color="green"></pipe>
   </game>
   <script type="module">
     import HGML from './hgml.js';
@@ -61,27 +70,51 @@
     const hgml = new HGML();
     await hgml.init()
     hgml.startGameLoop();
-  
-    const GRAVITY = 0.5;
-    const MAX_FALL_SPEED = 10;
+    console.log(hgml.getState());
 
     hgml.listen('keyup', (event) => {
       if (event.code === 'Space') {
-        const bird = hgml.getObjectByType("BIRD");
-        if (bird) {
-          bird.jump();
-        }
+        hgml.getObjectByType("BIRD").jump(hgml.G.deltaTime);
       }
     });
+
+    let tries = 0;
+
+    function restart() {
+      hgml.stopGameLoop();
+      cancelAnimationFrame(hgml.G.loopId);
+      hgml.resetGame();
+
+      const bird = hgml.getObjectByType("BIRD");
+      if (bird) {
+        bird.velocity = -7; // Reset to initial velocity
+        bird.rotation = 0;  // Reset rotation
+        bird.y = 360;       // Reset to initial position
+      }
+      hgml.startGameLoop();
+      console.log("DeltaTime:", hgml.G.deltaTime);
+      tries++;
+    }
   
     hgml.setUpdate((obj, deltaTime) => {
       if (obj.type === "BIRD") {
-        obj.velocity = (obj.velocity || 0) + GRAVITY * (deltaTime / 16.67);
-        obj.velocity = Math.min(obj.velocity, MAX_FALL_SPEED);
-        
-        obj.y += obj.velocity;
+        obj.fall(deltaTime);
         obj.rotate();
         obj.checkBounds();
+
+        hgml.getAllObjectsByType("PIPE").forEach((pipe) => {
+          if (hgml.checkCollision(obj, pipe)) {
+            console.log("pipe collision");
+            //hgml.stopGameLoop();
+            console.log("DeltaTime:", hgml.G.deltaTime);
+            restart();
+          }
+        });
+
+        //if (tries === 0) {
+          //console.log("DeltaTime:", hgml.G.deltaTime);
+        //}
+        //console.log("DeltaTime:", hgml.G.deltaTime);
       }
     });
   
@@ -89,6 +122,11 @@
 
       if (obj.type === "BIRD") {
         obj.render(ctx);
+      }
+
+      if (obj.type === "PIPE") {
+        ctx.fillStyle = obj.color;
+        ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
       }
     });
   
