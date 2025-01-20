@@ -17,8 +17,8 @@ export default class HGML {
       sounds: {}
     };
 
-    this.updateCallback = null;
-    this.renderCallback = null;
+    this._updateCallback = null;
+    this._renderCallback = null;
   }
 
   /**
@@ -51,7 +51,7 @@ export default class HGML {
 
   setUpdate(callback) {
     if (typeof callback === 'function') {
-      this.updateCallback = callback;
+      this._updateCallback = callback;
     } else {
       throw new Error("Update callback must be a function");
     }
@@ -59,21 +59,9 @@ export default class HGML {
 
   setRender(callback) {
     if (typeof callback === 'function') {
-      this.renderCallback = callback;
+      this._renderCallback = callback;
     } else {
       throw new Error("Render callback must be a function");
-    }
-  }
-
-  update(obj, deltaTime) {
-    if (this.updateCallback) {
-      this.updateCallback(obj, deltaTime);
-    }
-  }
-
-  render(obj, ctx) {
-    if (this.renderCallback) {
-      this.renderCallback(obj, ctx);
     }
   }
 
@@ -103,7 +91,232 @@ export default class HGML {
     this.G.objects.push(object);
   }
 
-  static createObject(e, hgmlInstance) {
+   /**
+  * Loads a sprite and stores it in the G.sprites object.
+  * @param {string} name - The name of the sprite.
+  * @param {string} src - The source URL of the sprite image.
+  */
+   loadSprite(name, src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = src;
+
+      img.onload = () => {
+        this.G.sprites[name] = img;
+        resolve(img);
+      };
+
+      img.onerror = (err) => {
+        console.error(`Failed to load sprite: ${src}`);
+        reject(err);
+      };
+    });
+  }
+
+  /**
+   * Retrieves a sprite by name.
+   * @param {string} name - The name of the sprite.
+   * @returns {HTMLImageElement|null} - The sprite image, or null if not found.
+   */
+  getSprite(name) {
+    return this.G.sprites[name] || null;
+  }
+
+  /**
+  * Loads a sound and stores it in the G.sounds object.
+  * @param {string} name - The name of the sound.
+  * @param {string} src - The source URL of the sound file.
+  */
+  loadSound(name, src) {
+    return new Promise((resolve, reject) => {
+      const audio = new Audio();
+      audio.src = src;
+
+      audio.onloadeddata = () => {
+        this.G.sounds[name] = audio;
+        resolve(audio);
+      };
+
+      audio.onerror = (err) => {
+        console.error(`Failed to load sound: ${src}`);
+        reject(err);
+      };
+    });
+  }
+
+  /**
+  * Retrieves a sound by name.
+  * @param {string} name - The name of the sound.
+  * @returns {HTMLAudioElement|null} - The sound element, or null if not found.
+  */
+  getSound(name) {
+    return this.G.sounds[name] || null;
+  }
+
+  getState() {
+    return this.G;
+  }
+
+  checkCollision(movingObj, staticObj) {
+    // Define bounding boxes
+    const movingBox = {
+      left: movingObj.x,
+      right: movingObj.x + movingObj.w,
+      top: movingObj.y,
+      bottom: movingObj.y + movingObj.h,
+    };
+  
+    const staticBox = {
+      left: staticObj.x,
+      right: staticObj.x + staticObj.w,
+      top: staticObj.y,
+      bottom: staticObj.y + staticObj.h,
+    };
+  
+    // Check if boxes overlap
+    if (
+      movingBox.right > staticBox.left &&
+      movingBox.left < staticBox.right &&
+      movingBox.bottom > staticBox.top &&
+      movingBox.top < staticBox.bottom
+    ) {
+      return true; // Collision detected
+    }
+  
+    return false; // No collision
+  }
+
+  async init() {
+    await this._loadSpritesFromDOM();
+    await this._loadSoundsFromDOM();
+
+    const gameElements = this.game.children;
+
+    for (const element of gameElements) {
+      if (element.tagName === 'SPRITE') continue;
+      if (element.tagName === 'SOUND') continue;
+
+      const obj = HGML._createObject(element, this);
+      this.G.objects.push(obj);
+    }
+
+    const globals = HGML._createObject(this.game, this);
+
+    const gameCanvas = document.createElement("canvas");
+    gameCanvas.setAttribute("id", "hgml");
+    gameCanvas.width = globals.w || 800;
+    gameCanvas.height = globals.h || 600; 
+    gameCanvas.style.backgroundColor = '#7cb7d9'
+
+    const ctx = gameCanvas.getContext("2d");
+    ctx.imageSmoothingEnabled = false;
+
+    this.G.instance = gameCanvas;
+    this.G.globals = globals;
+    this.G.ctx = ctx;
+    this.G.id = gameCanvas.id;
+
+    document.body.appendChild(gameCanvas);
+
+    return this;
+  }
+
+  startGameLoop() {
+    if (this.G.running) {
+      console.warn("A game loop is already running!");
+      return;
+    }
+
+    this.G.running = true;
+    const currentLoopId = Symbol("loop"); // Unique ID for this loop
+    this.G.currentLoopId = currentLoopId;
+
+    const MAX_DELTA_TIME = 1000 / 60;
+
+    const loop = (timestamp) => {
+      if (!this.G.running || this.G.currentLoopId !== currentLoopId) {
+        return; // Abort if stopped or a new loop has started
+      }
+
+      if (this.G.lastFrameTime === null) {
+        this.G.lastFrameTime = timestamp;
+      }
+
+      let deltaTime = timestamp - this.G.lastFrameTime;
+      this.G.lastFrameTime = timestamp;
+
+      deltaTime = Math.min(deltaTime, MAX_DELTA_TIME);
+      this.G.deltaTime = deltaTime;
+
+      // Your game loop logic
+      const solidObjects = this.G.objects.filter(obj => obj.solid);
+      for (const obj of this.G.objects) {
+        if (!obj.solid) {
+          this._update(obj, deltaTime);
+          for (const staticObj of solidObjects) {
+            if (this.checkCollision(obj, staticObj)) {
+              this._resolveCollision(obj, staticObj);
+            }
+          }
+        }
+      }
+
+      this.G.ctx.clearRect(0, 0, this.G.instance.width, this.G.instance.height);
+      for (const obj of this.G.objects) {
+        this._render(obj, this.G.ctx);
+      }
+
+      this.G.loopId = requestAnimationFrame(loop); // Schedule next frame
+    };
+
+    this.G.lastFrameTime = null;
+    this.G.loopId = requestAnimationFrame(loop); // Start the loop
+  }
+
+  resetGame() {
+    this._stopGameLoop();
+
+    // Clear the current game state
+    this.G.objects = [];
+    this.G.running = false;
+    this.G.lastFrameTime = 0;
+    this.G.deltaTime = 0;
+  
+    // Reinitialize game objects and options
+    const gameElements = this.game.children;
+    for (const element of gameElements) {
+      const obj = HGML._createObject(element, this);
+      this.G.objects.push(obj);
+    }
+  
+    const globals = HGML._createObject(this.game, this);
+  
+    // Reset canvas
+    const gameCanvas = this.G.instance;
+    gameCanvas.width = globals.w || 800;
+    gameCanvas.height = globals.h || 600;
+    this.G.ctx.imageSmoothingEnabled = false;
+    this.G.ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+  
+    // Reset options
+    this.G.globals = globals;
+  
+    console.log("Game has been reset!");
+  }
+
+  _update(obj, deltaTime) {
+    if (this._updateCallback) {
+      this._updateCallback(obj, deltaTime);
+    }
+  }
+
+  _render(obj, ctx) {
+    if (this._renderCallback) {
+      this._renderCallback(obj, ctx);
+    }
+  }
+
+  static _createObject(e, hgmlInstance) {
     const obj = {};
     obj.type = e.tagName;
 
@@ -167,38 +380,7 @@ export default class HGML {
     return obj;
   }
 
-  /**
- * Loads a sprite and stores it in the G.sprites object.
- * @param {string} name - The name of the sprite.
- * @param {string} src - The source URL of the sprite image.
- */
-  loadSprite(name, src) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.src = src;
-
-      img.onload = () => {
-        this.G.sprites[name] = img;
-        resolve(img);
-      };
-
-      img.onerror = (err) => {
-        console.error(`Failed to load sprite: ${src}`);
-        reject(err);
-      };
-    });
-  }
-
-  /**
-   * Retrieves a sprite by name.
-   * @param {string} name - The name of the sprite.
-   * @returns {HTMLImageElement|null} - The sprite image, or null if not found.
-   */
-  getSprite(name) {
-    return this.G.sprites[name] || null;
-  }
-
-  async loadSpritesFromDOM() {
+  async _loadSpritesFromDOM() {
     const spriteElements = this.game.querySelectorAll('sprite');
   
     const promises = Array.from(spriteElements).map((sprite) => {
@@ -217,40 +399,9 @@ export default class HGML {
   }
 
   /**
-  * Loads a sound and stores it in the G.sounds object.
-  * @param {string} name - The name of the sound.
-  * @param {string} src - The source URL of the sound file.
-  */
-  loadSound(name, src) {
-    return new Promise((resolve, reject) => {
-      const audio = new Audio();
-      audio.src = src;
-
-      audio.onloadeddata = () => {
-        this.G.sounds[name] = audio;
-        resolve(audio);
-      };
-
-      audio.onerror = (err) => {
-        console.error(`Failed to load sound: ${src}`);
-        reject(err);
-      };
-    });
-  }
-
-  /**
-  * Retrieves a sound by name.
-  * @param {string} name - The name of the sound.
-  * @returns {HTMLAudioElement|null} - The sound element, or null if not found.
-  */
-  getSound(name) {
-    return this.G.sounds[name] || null;
-  }
-
-  /**
   * Loads all sounds defined in the DOM and stores them in the G.sounds object.
   */
-  async loadSoundsFromDOM() {
+  async _loadSoundsFromDOM() {
     const soundElements = this.game.querySelectorAll('sound');
 
     const promises = Array.from(soundElements).map((sound) => {
@@ -268,98 +419,7 @@ export default class HGML {
     return Promise.all(promises);
   }
 
-  async init() {
-    await this.loadSpritesFromDOM();
-    await this.loadSoundsFromDOM();
-
-    const gameElements = this.game.children;
-
-    for (const element of gameElements) {
-      if (element.tagName === 'SPRITE') continue;
-      if (element.tagName === 'SOUND') continue;
-
-      const obj = HGML.createObject(element, this);
-      this.G.objects.push(obj);
-    }
-
-    const globals = HGML.createObject(this.game, this);
-
-    const gameCanvas = document.createElement("canvas");
-    gameCanvas.setAttribute("id", "hgml");
-    gameCanvas.width = globals.w || 800;
-    gameCanvas.height = globals.h || 600; 
-    gameCanvas.style.backgroundColor = '#7cb7d9'
-
-    const ctx = gameCanvas.getContext("2d");
-    ctx.imageSmoothingEnabled = false;
-
-    this.G.instance = gameCanvas;
-    this.G.globals = globals;
-    this.G.ctx = ctx;
-    this.G.id = gameCanvas.id;
-
-    document.body.appendChild(gameCanvas);
-
-    return this;
-  }
-
-  getState() {
-    return this.G;
-  }
-
-  startGameLoop() {
-    if (this.G.running) {
-      console.warn("A game loop is already running!");
-      return;
-    }
-
-    this.G.running = true;
-    const currentLoopId = Symbol("loop"); // Unique ID for this loop
-    this.G.currentLoopId = currentLoopId;
-
-    const MAX_DELTA_TIME = 1000 / 60;
-
-    const loop = (timestamp) => {
-      if (!this.G.running || this.G.currentLoopId !== currentLoopId) {
-        return; // Abort if stopped or a new loop has started
-      }
-
-      if (this.G.lastFrameTime === null) {
-        this.G.lastFrameTime = timestamp;
-      }
-
-      let deltaTime = timestamp - this.G.lastFrameTime;
-      this.G.lastFrameTime = timestamp;
-
-      deltaTime = Math.min(deltaTime, MAX_DELTA_TIME);
-      this.G.deltaTime = deltaTime;
-
-      // Your game loop logic
-      const solidObjects = this.G.objects.filter(obj => obj.solid);
-      for (const obj of this.G.objects) {
-        if (!obj.solid) {
-          this.update(obj, deltaTime);
-          for (const staticObj of solidObjects) {
-            if (this.checkCollision(obj, staticObj)) {
-              this.resolveCollision(obj, staticObj);
-            }
-          }
-        }
-      }
-
-      this.G.ctx.clearRect(0, 0, this.G.instance.width, this.G.instance.height);
-      for (const obj of this.G.objects) {
-        this.render(obj, this.G.ctx);
-      }
-
-      this.G.loopId = requestAnimationFrame(loop); // Schedule next frame
-    };
-
-    this.G.lastFrameTime = null;
-    this.G.loopId = requestAnimationFrame(loop); // Start the loop
-}
-
-  stopGameLoop() {
+  _stopGameLoop() {
     if (this.G.running) {
       console.log("Stopping the game loop...");
       this.G.running = false;
@@ -374,67 +434,7 @@ export default class HGML {
     }
   }
 
-  resetGame() {
-    this.stopGameLoop();
-
-    // Clear the current game state
-    this.G.objects = [];
-    this.G.running = false;
-    this.G.lastFrameTime = 0;
-    this.G.deltaTime = 0;
-  
-    // Reinitialize game objects and options
-    const gameElements = this.game.children;
-    for (const element of gameElements) {
-      const obj = HGML.createObject(element, this);
-      this.G.objects.push(obj);
-    }
-  
-    const globals = HGML.createObject(this.game, this);
-  
-    // Reset canvas
-    const gameCanvas = this.G.instance;
-    gameCanvas.width = globals.w || 800;
-    gameCanvas.height = globals.h || 600;
-    this.G.ctx.imageSmoothingEnabled = false;
-    this.G.ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
-  
-    // Reset options
-    this.G.globals = globals;
-  
-    console.log("Game has been reset!");
-  }
-
-  checkCollision(movingObj, staticObj) {
-    // Define bounding boxes
-    const movingBox = {
-      left: movingObj.x,
-      right: movingObj.x + movingObj.w,
-      top: movingObj.y,
-      bottom: movingObj.y + movingObj.h,
-    };
-  
-    const staticBox = {
-      left: staticObj.x,
-      right: staticObj.x + staticObj.w,
-      top: staticObj.y,
-      bottom: staticObj.y + staticObj.h,
-    };
-  
-    // Check if boxes overlap
-    if (
-      movingBox.right > staticBox.left &&
-      movingBox.left < staticBox.right &&
-      movingBox.bottom > staticBox.top &&
-      movingBox.top < staticBox.bottom
-    ) {
-      return true; // Collision detected
-    }
-  
-    return false; // No collision
-  }
-
-  resolveCollision(movingObj, staticObj) {
+  _resolveCollision(movingObj, staticObj) {
     const overlap = {
       left: movingObj.x + movingObj.w - staticObj.x,
       right: staticObj.x + staticObj.w - movingObj.x,
