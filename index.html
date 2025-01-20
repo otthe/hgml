@@ -3,180 +3,97 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HGML example</title>
-  <script defer src="hgml.js" type="module"></script>
+  <title>Flappy Bird</title>
 </head>
 <body>
+  <game w="360" h="650">
+    <sprite name="bird" src="bird.png"></sprite>
 
-  <!-- MAKE SURE YOU ARE NOT USING ELEMENT NAMES THAT ARE RESERVED IN TRADITIONAL HTML -->
-  <game w="800" h="600">
-
-    <sprite name="player" src="player.png"></sprite>
-
-    <player x="100" y="100" w="48" h="96" color="blue" speed="0.3">
-      <!-- You can define methods directly inside the markup if you want-->
-      <method name="moveLeft" action="
-        this.x -= this.speed * hgml.G.deltaTime;">
+    <bird x="128" y="360" w="96" h="64" velocity="7">
+      <method name="jump" action="
+        this.y -= 0.5 * hgml.G.deltaTime;
+        this.velocity = -7;">
       </method>
-      <method name="moveUp" action="
-        this.y -= this.speed * hgml.G.deltaTime;">
-      </method>
-      <method name="moveRight" action="
-        this.x += this.speed * hgml.G.deltaTime;">
-      </method>
-      <method name="moveDown" action="
-        this.y += this.speed * hgml.G.deltaTime;">
-      </method>
-      <method name="withParameters" parameters='["name", "age"]' action="
-        console.log(`My name is ${name} and I am ${age} years old.`);">
-      </method>
-    </player>
 
-    <wall x="0" y="0" w="800" h="64" color="black" solid="true"></wall>
-    <wall x="0" y="0" w="32" h="600" color="black" solid="true"></wall>
-    <wall x="768" y="0" w="32" h="600" color="black" solid="true"></wall>
-    <wall x="0" y="568" w="800" h="32" color="black" solid="true"></wall>
-    <wall x="384" y="0" w="32" h="448" color="black" solid="true"></wall>
-    <wall x="192" y="416" w="384" h="32" color="black" solid="true"></wall>
-
-    <enemy x="288" y="300" w="64" h="64" color="red" direction="1" prevX="0" speed="0.2">
-      <method name="moveToRandomDirection" action="
-        const nextX = this.x + this.direction * this.speed * hgml.G.deltaTime;
-
-        const collides = hgml.G.objects.some(obj => obj.solid && hgml.checkCollision({ ...this, x: nextX }, obj));
-    
-        if (collides) {
-          this.direction *= -1;
-        } else {
-          this.prevX = this.x;
-          this.x = nextX;
-        }
-        ">
+      <method name="rotate" action="
+        const ROTATION_SPEED = 5;
+        const MAX_ROTATION = 30;
+        this.rotation = Math.min(
+          Math.max(-MAX_ROTATION, this.velocity * ROTATION_SPEED),
+          MAX_ROTATION
+        );">
       </method>
-    </enemy>
-    <!-- <enemy x="448" y="300" w="64" h="64" color="red"></enemy> -->
 
-    <coin x="400" y="400" w="32" h="32" color="yellow">
-      <method name="pickRandomPosition" action="
-        const maxX = hgml.G.options.w - this.w;
-        const minX = this.w;
-        const maxY = hgml.G.options.h - this.h;
-        const minY = this.h;
-        this.x = Math.floor(Math.random() * (maxX - minX + 1)) + minX;
-        this.y = Math.floor(Math.random() * (maxY - minY + 1)) + minY;
-        ">
+      <method name="render" parameters='["ctx"]' action="
+        ctx.save();
+        ctx.translate(this.x + this.w / 2, this.y + this.h / 2); 
+        ctx.rotate((this.rotation * Math.PI) / 180); 
+        ctx.drawImage(
+          hgml.getSprite('bird'),
+          -this.w / 2,
+          -this.h / 2,
+          this.w,
+          this.h
+        ); 
+        ctx.restore(); ">
       </method>
-    </coin>
 
-    <scoreboard x="192" y="8" w="416" h="48" color="gray" solid="false" score="0">
-      <method name="showScore" action="
-        hgml.G.ctx.font = '36px serif';
-        hgml.G.ctx.fillStyle = '#fff';
-        hgml.G.ctx.fillText(this.score, this.x+(this.w/2), this.y+32);
-      ">
+      <method name="checkBounds" action="
+      const gameHeight = hgml.getState().options.h;
+      if (this.y > gameHeight - this.h) {
+        this.y = gameHeight - this.h;
+        this.velocity = 0; 
+      }
+
+      if (this.y < 0) {
+        this.y = 0;
+        this.velocity = 0;
+      }">
     </method>
-    </scoreboard>
+
+    </bird>
+
+    <pipe></pipe>
   </game>
-
-</body>
-
-<script type="module">
-import HGML from './hgml.js';
-
-const keys = {};
-document.addEventListener('keydown', (e) => {
-  keys[e.key] = true; 
-});
-
-document.addEventListener('keyup', (e) => {
-  keys[e.key] = false;
-});
-
-document.addEventListener("keydown", (e) => {
-  if (e.key === "r") {
-    hgml.stopGameLoop();
-    console.log("Resetting the game...");
-    hgml.resetGame();
-    console.log(hgml.getState());
-    coin = hgml.getObjectByType("COIN");
-    scoreboard = hgml.getObjectByType("SCOREBOARD");
-    player = hgml.getObjectByType("PLAYER");
-    // let enemies = hgml.getAllObjectsByType("ENEMY");
-    // enemies.forEach((enemy) => {
-    //     enemy.moveToRandomDirection = function(deltaTime) {
-    //     this.x += 0.4 * deltaTime;
-    //   }
-    // });
-
-    hgml.startGameLoop();
-  }
-});
-
-const hgml = new HGML();
-
-
-await hgml.init()
-hgml.startGameLoop();
-
-console.log(hgml.getState());
-
-let coin = hgml.getObjectByType("COIN");
-let scoreboard = hgml.getObjectByType("SCOREBOARD");
-let player = hgml.getObjectByType("PLAYER");
-
-let playerSprite = hgml.getSprite("player");
-
-
-// another way to add methods to objects
-// note that if you add methods this way you have to add them again when you reset game state
-// let enemies = hgml.getAllObjectsByType("ENEMY");
-// enemies.forEach((enemy) => {
-//     enemy.moveToRandomDirection = function(deltaTime) {
-//     this.x += 1 * deltaTime;
-//   }
-// });
-
-hgml.setUpdate((obj, deltaTime) => {
-  // console.log(`Updating ${obj.type}: x=${obj.x}, y=${obj.y}`);
+  <script type="module">
+    import HGML from './hgml.js';
   
-  if (obj.type === "PLAYER") {
-    if (keys['ArrowLeft']) {
-      obj.moveLeft(deltaTime);
-    }
-    if (keys['ArrowRight']) {
-      obj.moveRight(deltaTime);
-    }
-    if (keys['ArrowUp']) {
-      obj.moveUp(deltaTime);
-    }
-    if (keys['ArrowDown']) {
-      obj.moveDown(deltaTime);
-    }
+    const hgml = new HGML();
+    await hgml.init()
+    hgml.startGameLoop();
+  
+    const GRAVITY = 0.5;
+    const MAX_FALL_SPEED = 10;
 
-    if (hgml.checkCollision(obj, coin)) {
-      coin.pickRandomPosition();
-      scoreboard.score += 100;
-    }
-  }
+    hgml.listen('keyup', (event) => {
+      if (event.code === 'Space') {
+        const bird = hgml.getObjectByType("BIRD");
+        if (bird) {
+          bird.jump();
+        }
+      }
+    });
+  
+    hgml.setUpdate((obj, deltaTime) => {
+      if (obj.type === "BIRD") {
+        obj.velocity = (obj.velocity || 0) + GRAVITY * (deltaTime / 16.67);
+        obj.velocity = Math.min(obj.velocity, MAX_FALL_SPEED);
+        
+        obj.y += obj.velocity;
+        obj.rotate();
+        obj.checkBounds();
+      }
+    });
+  
+    hgml.setRender((obj, ctx) => {
 
-  if (obj.type === "ENEMY") {
-    obj.moveToRandomDirection();
-  }
-});
-
-hgml.setRender((obj, ctx) => {
-  if (obj.type === "PLAYER") {
-    ctx.drawImage(playerSprite, obj.x, obj.y, obj.w, obj.h);
-  } else {
-    ctx.fillStyle = obj.color || '#000';
-    ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
-  }
-
-  if (obj.type === "SCOREBOARD") {
-    obj.showScore();
-  }
-});
-
-</script>
-
+      if (obj.type === "BIRD") {
+        obj.render(ctx);
+      }
+    });
+  
+  </script>
+</body>
 </html>
+
+

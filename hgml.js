@@ -11,13 +11,41 @@ export default class HGML {
       running: false,
       lastFrameTime: 0,
       deltaTime: 0,
-
+      listeners: [],
       sprites: {}
     };
 
     this.updateCallback = null;
     this.renderCallback = null;
   }
+
+  /**
+   * Listen for events and store references for cleanup.
+   * @param {string} type - Event type (e.g., "keydown").
+   * @param {Function} handler - Event handler function.
+   * @param {Object} [options] - Optional event listener options.
+   */
+  listen(type, handler, options= {}) {
+    if (typeof handler !== 'function') {
+      throw new Error("Handler must be a function!");
+    }
+
+    const boundHandler = handler.bind(this);
+    window.addEventListener(type, boundHandler, options);
+
+    this.G.listeners.push({type, handler: boundHandler, options });
+  }
+
+  removeListeners(type = null) {
+    this.G.listeners = this.G.listeners.filter(({ type: listenerType, handler, options }) => {
+      if (!type || type === listenerType) {
+        window.removeEventListener(listenerType, handler, options);
+        return false; // Remove from the array
+      }
+      return true; // Keep in the array
+    });
+  }
+
 
   setUpdate(callback) {
     if (typeof callback === 'function') {
@@ -67,10 +95,7 @@ export default class HGML {
 
     // Process attributes as object's values
     for (const attr of e.attributes) {
-      console.log(`Creating object: ${e.tagName}, x=${e.getAttribute('x')}`);
-
       const name = attr.name;
-      console.log(typeof attr.value);
       const value = isNaN(attr.value) ? attr.value : parseFloat(attr.value);
 
       obj[name] = value;
@@ -82,7 +107,6 @@ export default class HGML {
     for (let i = 0; i < children.length; i++) {
       const c = children[i];
       const type = c.tagName;
-      console.log(type);
 
       if (type === 'METHOD') {
         let methodName = null;
