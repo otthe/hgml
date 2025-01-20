@@ -38,6 +38,10 @@ export default class HGML {
     this.G.listeners.push({type, handler: boundHandler, options });
   }
 
+  /**
+   * 
+   * @param {string} type - Event type (e.g., "keyup") 
+   */
   removeListeners(type = null) {
     this.G.listeners = this.G.listeners.filter(({ type: listenerType, handler, options }) => {
       if (!type || type === listenerType) {
@@ -49,6 +53,10 @@ export default class HGML {
   }
 
 
+  /**
+   * 
+   * @param {Function} callback - Callback with parameters (obj, deltaTime) 
+   */
   setUpdate(callback) {
     if (typeof callback === 'function') {
       this._updateCallback = callback;
@@ -57,6 +65,10 @@ export default class HGML {
     }
   }
 
+  /**
+   * 
+   * @param {Function} callback - Callback with parameters (obj, ctx) 
+   */
   setRender(callback) {
     if (typeof callback === 'function') {
       this._renderCallback = callback;
@@ -65,10 +77,20 @@ export default class HGML {
     }
   }
 
+  /**
+   * 
+   * @param {string} type - Type of HTML element tag in UPPERCASE
+   * @returns array of objects
+   */
   getAllObjectsByType(type) {
     return this.G.objects.filter(obj => obj.type === type);
   }
 
+  /**
+   * 
+   * @param {string} type - Type of HTML element tag in UPPERCASE
+   * @returns object or null
+   */
   getObjectByType(type) {
     for (let i = 0; i < this.G.objects.length; i++) {
       const o = this.G.objects[i];
@@ -79,6 +101,11 @@ export default class HGML {
     return null;
   }
 
+  /**
+   * Dynamically add objects during the game
+   * @param {string} type - string identifier, preferably UPPERCASE 
+   * @param {*} object - object containing the object information
+   */
   addObject(type, object) {
     if (typeof type !== 'string') {
       throw new Error("type must be a string, preferably UPPERCASE");
@@ -152,11 +179,21 @@ export default class HGML {
   getSound(name) {
     return this.G.sounds[name] || null;
   }
-
+  
+  /**
+   * Returns game data
+   * @returns - game data
+   */
   getState() {
     return this.G;
   }
 
+  /**
+   * Checks collision between two game objects
+   * @param {object} movingObj 
+   * @param {object} staticObj 
+   * @returns - boolean
+   */
   checkCollision(movingObj, staticObj) {
     // Define bounding boxes
     const movingBox = {
@@ -186,6 +223,10 @@ export default class HGML {
     return false; // No collision
   }
 
+  /**
+   * Generates new game instance
+   * @returns - this
+   */
   async init() {
     await this._loadSpritesFromDOM();
     await this._loadSoundsFromDOM();
@@ -221,6 +262,10 @@ export default class HGML {
     return this;
   }
 
+  /**
+   * Starts the game loop and makes sure that only game loop is running at a given time
+   * @returns 
+   */
   startGameLoop() {
     if (this.G.running) {
       console.warn("A game loop is already running!");
@@ -228,7 +273,7 @@ export default class HGML {
     }
 
     this.G.running = true;
-    const currentLoopId = Symbol("loop"); // Unique ID for this loop
+    const currentLoopId = Symbol("loop"); // uniq. id for this loop
     this.G.currentLoopId = currentLoopId;
 
     const MAX_DELTA_TIME = 1000 / 60;
@@ -273,6 +318,10 @@ export default class HGML {
     this.G.loopId = requestAnimationFrame(loop); // Start the loop
   }
 
+  /**
+   * Stops the game execution and resets the game state,
+   * to start new game you must call hgml.startGameLoop()
+   */
   resetGame() {
     this._stopGameLoop();
 
@@ -304,18 +353,36 @@ export default class HGML {
     console.log("Game has been reset!");
   }
 
+  /**
+   * Used to bride update callback between game loop and user api
+   * @param {object} obj - game object reference
+   * @param {Float} deltaTime - deltaTime
+   */
   _update(obj, deltaTime) {
     if (this._updateCallback) {
       this._updateCallback(obj, deltaTime);
     }
   }
 
+  /**
+   * Used to bride render callback between game loop and user api
+   * @param {object} obj - game object reference 
+   * @param {object} ctx - context to game canvas
+   */
   _render(obj, ctx) {
     if (this._renderCallback) {
       this._renderCallback(obj, ctx);
     }
   }
 
+  /**
+   * Turns html elements into game objects.
+   * Takes care of reserved tags like <sprite> and <sound>
+   * Checks if game objets have methods as childs and binds reference to this class instance to them
+   * @param {HTMLElement} e - reference to html element 
+   * @param {*} hgmlInstance - reference to hgml instance (this)
+   * @returns - game object
+   */
   static _createObject(e, hgmlInstance) {
     const obj = {};
     obj.type = e.tagName;
@@ -380,6 +447,9 @@ export default class HGML {
     return obj;
   }
 
+  /**
+  * Loads all sprites defined in the DOM and stores them in the G.sprites object.
+  */
   async _loadSpritesFromDOM() {
     const spriteElements = this.game.querySelectorAll('sprite');
   
@@ -419,6 +489,9 @@ export default class HGML {
     return Promise.all(promises);
   }
 
+  /**
+   * Stops the game execution and cancels animation frame by dereferencing loopId
+   */
   _stopGameLoop() {
     if (this.G.running) {
       console.log("Stopping the game loop...");
@@ -434,6 +507,12 @@ export default class HGML {
     }
   }
 
+  /**
+   * Makes sure solid objects stop the movement of non-solid objects and that they wont get stuck inside solids
+   * !!!if you want to place non-solid object inside the position of solid object you must explicitly add solid=false attribute to it!!!
+   * @param {object} movingObj - moving game object
+   * @param {object} staticObj - static game object (solid=true)
+   */
   _resolveCollision(movingObj, staticObj) {
     const overlap = {
       left: movingObj.x + movingObj.w - staticObj.x,
