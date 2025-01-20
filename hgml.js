@@ -13,13 +13,12 @@ export default class HGML {
       loopId: null,
       deltaTime: 0,
       listeners: [],
-      sprites: {}
+      sprites: {},
+      sounds: {}
     };
 
     this.updateCallback = null;
     this.renderCallback = null;
-
-    //this.activeLoops = 0;
   }
 
   /**
@@ -90,6 +89,18 @@ export default class HGML {
       }
     }
     return null;
+  }
+
+  addObject(type, object) {
+    if (typeof type !== 'string') {
+      throw new Error("type must be a string, preferably UPPERCASE");
+    } 
+    if (typeof object !== 'object') {
+      throw new Error("object is not valid object");
+    }
+
+    object.type = type;
+    this.G.objects.push(object);
   }
 
   static createObject(e, hgmlInstance) {
@@ -205,13 +216,67 @@ export default class HGML {
     return Promise.all(promises);
   }
 
+  /**
+  * Loads a sound and stores it in the G.sounds object.
+  * @param {string} name - The name of the sound.
+  * @param {string} src - The source URL of the sound file.
+  */
+  loadSound(name, src) {
+    return new Promise((resolve, reject) => {
+      const audio = new Audio();
+      audio.src = src;
+
+      audio.onloadeddata = () => {
+        this.G.sounds[name] = audio;
+        resolve(audio);
+      };
+
+      audio.onerror = (err) => {
+        console.error(`Failed to load sound: ${src}`);
+        reject(err);
+      };
+    });
+  }
+
+  /**
+  * Retrieves a sound by name.
+  * @param {string} name - The name of the sound.
+  * @returns {HTMLAudioElement|null} - The sound element, or null if not found.
+  */
+  getSound(name) {
+    return this.G.sounds[name] || null;
+  }
+
+  /**
+  * Loads all sounds defined in the DOM and stores them in the G.sounds object.
+  */
+  async loadSoundsFromDOM() {
+    const soundElements = this.game.querySelectorAll('sound');
+
+    const promises = Array.from(soundElements).map((sound) => {
+      const name = sound.getAttribute('name');
+      const src = sound.getAttribute('src');
+
+      if (!name || !src) {
+        console.error('Sound element is missing a name or src attribute:', sound);
+        return Promise.resolve();
+      }
+
+      return this.loadSound(name, src);
+    });
+
+    return Promise.all(promises);
+  }
+
   async init() {
     await this.loadSpritesFromDOM();
+    await this.loadSoundsFromDOM();
 
     const gameElements = this.game.children;
 
     for (const element of gameElements) {
-      if (element.tagName === 'SPRITE') continue; //skip sprites
+      if (element.tagName === 'SPRITE') continue;
+      if (element.tagName === 'SOUND') continue;
 
       const obj = HGML.createObject(element, this);
       this.G.objects.push(obj);
@@ -392,70 +457,3 @@ export default class HGML {
     }
   }
 }
-
-
-// const game = document.querySelector('game');
-
-// const G = {
-//   objects: [],
-//   options: null,
-//   ctx: null,
-//   instance: null
-// }
-
-// function get(game, tag) {
-//   return game.querySelector(tag);
-// }
-
-// function getAll(game, tag) {
-//   return game.querySelectorAll(tag);
-// }
-
-// function createObject(e) {
-//   const obj = {};
-
-//   for (const attr of e.attributes) {
-//     const name = attr.name;
-//     const value = isNaN(attr.value) ? attr.value : parseFloat(attr.value);
-
-//     obj[name] = value;
-//   }
-
-//   return obj;
-// }
-
-// function initGame(game, G) {
-//   const gameElements = game.children;
-//   for (let i = 0; i < gameElements.length; i++) {
-//     const e = gameElements[i];
-//     console.log(e);
-//     const obj = createObject(e);
-//     G.objects.push(obj);
-//   }
-
-//   const options = createObject(game);
-
-//   const gameCanvas = document.createElement('canvas');
-//   gameCanvas.setAttribute('id', 'hgml');
-//   gameCanvas.width = options.w;
-//   gameCanvas.height = options.h;
-
-//   const ctx = gameCanvas.getContext('2d');
-//   ctx.imageSmoothingEnabled = false;
-  
-//   G.instance = gameCanvas;
-//   G.options = options;
-//   G.ctx = ctx;
-//   G.id = gameCanvas.id;
-
-//   return G;
-// }
-
-// console.log(get(game, 'player'));
-// console.log(getAll(game, 'wall'));
-
-// initGame(game, G);
-// console.log(G.objects);
-// console.log(G);
-
-// document.body.appendChild(G.instance);

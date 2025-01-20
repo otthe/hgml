@@ -6,16 +6,17 @@
   <title>Flappy Bird</title>
 </head>
 <body>
-  <game w="360" h="650">
+  <game w="360" h="650" scoreCollected="false">
     <sprite name="bird" src="bird.png"></sprite>
+    <sound name="bling" src="bling.wav"></sound>
 
     <!-- 
       Methods have access to the hgml instance,
       so instead of using parameter for deltaTime and ctx
-      like in methods defined below, you could just use
+      like in these bird's methods defined below, you could also just use
       'hgml.G.deltaTime' or 'hgml.G.ctx' inside the method.
     -->
-    <bird x="128" y="360" w="96" h="64" velocity="-7">
+    <bird x="96" y="360" w="96" h="64" velocity="-7">
       <method name="jump" parameters='["deltaTime"]' action="
         this.velocity = -7;
         this.y -= 0.5 * deltaTime;">
@@ -46,14 +47,8 @@
 
       <method name="checkBounds" action="
         const gameHeight = hgml.getState().options.h;
-        if (this.y > gameHeight - this.h) {
-          this.y = gameHeight - this.h;
-          this.velocity = 0; 
-        }
-
-        if (this.y < 0) {
-          this.y = 0;
-          this.velocity = 0;
+        if ((this.y > gameHeight - this.h) || (this.y < 0)) {
+          hgml.resetGame();
         }">
       </method>
 
@@ -64,21 +59,55 @@
         this.velocity = Math.min(this.velocity, MAX_FALL_SPEED);
         this.y += this.velocity">
       </method>
-
     </bird>
 
-    <pipe x="170" y="0" w="64" h="170" color="#07911f"></pipe>
-    <pipe color="green"></pipe>
+    <!-- 
+      You don't actually have to define methods inside the element tags.
+
+      You can also:
+
+      1) Just write the wanted behaviour into render and update loop.
+
+        For example:
+        ------------
+          hgml.setUpdate((obj, deltaTime) => {
+            if (obj.type === "PLAYER") {
+              obj.x += 0.2*deltaTime
+            }
+          });
+
+      2) Get reference to the object(s) with get getObjectByType("TYPE") or 
+      getAllObjectsByType("TYPE") and add custom methods/variables that way.
+      ! Note that if you add methods this way, you have to do it everytime you reset the game!
+
+        For example:
+        -----------
+          hgml.getAllObjectsByType("PIPE").forEach((pipe) => {
+            pipe.foo = function() {console.log("bar")}
+          });
+
+    All the logic of the object's below is defined in the <script> tag's
+    -->
+    <pipe x="320" y="0" w="64" h="170" color="#07911f" position="top"></pipe>
+    <pipe x="320" y="400" w="64" h="250" color="#07911f" position="bottom"></pipe>
+    <scoreboard score="0" x="0" y="0" w="360" h="64"></scoreboard>
   </game>
+
   <script type="module">
     import HGML from './hgml.js';
   
     const hgml = new HGML();
-    await hgml.init()
+    await hgml.init();
     hgml.startGameLoop();
+
+    console.log(hgml.getState());
 
     hgml.listen('keyup', (event) => {
       if (event.code === 'Space') {
+        if (!hgml.G.running) {
+          hgml.startGameLoop();
+        }
+
         hgml.getObjectByType("BIRD").jump(hgml.G.deltaTime);
       }
     });
@@ -92,10 +121,41 @@
         hgml.getAllObjectsByType("PIPE").forEach((pipe) => {
           if (hgml.checkCollision(obj, pipe)) {
             hgml.resetGame();
-            hgml.startGameLoop();
           }
+
+          if (obj.x > (pipe.x + (pipe.w/2)) && !hgml.G.options.scoreCollected) {
+            hgml.getObjectByType("SCOREBOARD").score++;
+            hgml.getSound("bling").play();
+            hgml.G.options.scoreCollected = true;
+          }
+
         });
       }
+      if (obj.type === "PIPE") {
+        obj.x -= 0.1 * deltaTime;
+
+        // If the pipe moves off-screen, reset its position and randomize height
+        if (obj.x < -obj.w) {
+          hgml.G.options.scoreCollected = false;
+          obj.x = hgml.G.options.w;
+
+          // Find the pair (top and bottom pipes) and set their heights
+          const gapHeight = 240; // Gap height between top and bottom pipe
+          const topHeight = Math.random() * (hgml.G.options.h - gapHeight - 200); // Random height with padding
+          const bottomY = topHeight + gapHeight;
+
+          hgml.getAllObjectsByType("PIPE").forEach((pipe) => {
+            if (pipe.position === "top") {
+              pipe.y = 0;
+              pipe.h = topHeight;
+            } else if (pipe.position === "bottom") {
+              pipe.y = bottomY;
+              pipe.h = hgml.G.options.h - bottomY;
+            }
+          });
+        }
+      }
+
     });
   
     hgml.setRender((obj, ctx) => {
@@ -107,6 +167,19 @@
       if (obj.type === "PIPE") {
         ctx.fillStyle = obj.color;
         ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
+      }
+
+      if (obj.type === "SCOREBOARD") {       
+        ctx.fillStyle = "rgba(0,0,0,0.4)";
+        ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
+
+        ctx.fillStyle = "#fff";
+        ctx.font = '20px sans-serif';
+
+        var textString = `SCORE: ${obj.score}`,
+            textWidth = ctx.measureText(textString ).width;
+
+        ctx.fillText(textString , (hgml.G.options.w/2) - (textWidth / 2), 32);
       }
     });
   
