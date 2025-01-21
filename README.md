@@ -1,4 +1,6 @@
-# Hypergame markup language
+# <b>HyperGame Markup Language (HGML) </b>
+
+Mini-library that transforms custom HTML elements into dynamic HTML5 canvas games / interactive experiments.
 
 ## Get started
 ```html
@@ -42,6 +44,7 @@
 </body>
 </html>
 ```
+
 ## Reserved tags and attributes
 ```html
  <!-- 
