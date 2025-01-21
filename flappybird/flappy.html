@@ -48,7 +48,7 @@
       <method name="checkBounds" action="
         const gameHeight = hgml.getState().globals.h;
         if ((this.y > gameHeight - this.h) || (this.y < 0)) {
-          hgml.resetGame();
+          hgml.reset();
         }">
       </method>
 
@@ -70,19 +70,18 @@
 
         For example:
         ------------
-          hgml.setUpdate((obj, deltaTime) => {
+          hgml.update((obj, deltaTime) => {
             if (obj.type === "PLAYER") {
               obj.x += 0.2*deltaTime
             }
           });
 
-      2) Get reference to the object(s) with get getObjectByType("TYPE") or 
-      getAllObjectsByType("TYPE") and add custom methods/variables that way.
+      2) Get reference to the object(s) with get get("TYPE") or getAll("TYPE") and add custom methods/variables that way.
       ! Note that if you add methods this way, you have to do it everytime you reset the game!
 
         For example:
         -----------
-          hgml.getAllObjectsByType("PIPE").forEach((pipe) => {
+          hgml.getAll("PIPE").forEach((pipe) => {
             pipe.foo = function() {console.log("bar")}
           });
 
@@ -98,33 +97,33 @@
   
     const hgml = new HGML();
     await hgml.init();
-    hgml.startGameLoop();
+    hgml.loop();
 
     console.log(hgml.getState());
 
     hgml.listen('keyup', (event) => {
       if (event.code === 'Space') {
         if (!hgml.G.running) {
-          hgml.startGameLoop();
+          hgml.loop();
         }
 
-        hgml.getObjectByType("BIRD").jump(hgml.G.deltaTime);
+        hgml.get("BIRD").jump(hgml.G.deltaTime);
       }
     });
   
-    hgml.setUpdate((obj, deltaTime) => {
+    hgml.update((obj, deltaTime) => {
       if (obj.type === "BIRD") {
         obj.fall(deltaTime);
         obj.rotate();
         obj.checkBounds();
 
-        hgml.getAllObjectsByType("PIPE").forEach((pipe) => {
-          if (hgml.checkCollision(obj, pipe)) {
-            hgml.resetGame();
+        hgml.getAll("PIPE").forEach((pipe) => {
+          if (hgml.collides(obj, pipe)) {
+            hgml.reset();
           }
 
           if (obj.x > (pipe.x + (pipe.w/2)) && !hgml.G.globals.scoreCollected) {
-            hgml.getObjectByType("SCOREBOARD").score++;
+            hgml.get("SCOREBOARD").score++;
             hgml.getSound("bling").play();
             hgml.G.globals.scoreCollected = true;
           }
@@ -144,7 +143,7 @@
           const topHeight = Math.random() * (hgml.G.globals.h - gapHeight - 200); // Random height with padding
           const bottomY = topHeight + gapHeight;
 
-          hgml.getAllObjectsByType("PIPE").forEach((pipe) => {
+          hgml.getAll("PIPE").forEach((pipe) => {
             if (pipe.position === "top") {
               pipe.y = 0;
               pipe.h = topHeight;
@@ -158,7 +157,7 @@
 
     });
   
-    hgml.setRender((obj, ctx) => {
+    hgml.render((obj, ctx) => {
 
       if (obj.type === "BIRD") {
         obj.render(ctx);

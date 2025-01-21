@@ -19,6 +19,31 @@ export default class HGML {
 
     this._updateCallback = null;
     this._renderCallback = null;
+
+    // add shorter aliases for some of the public methods
+    // FIX: rename the original method names with the shorter ones
+    this.reset = this.resetGame;
+    this.loop = this.startGameLoop;
+    this.init = this.init; //same
+
+    this.collides = this.checkCollision;
+    this.getState = this.getState; //same
+
+    this.getSound = this.getSound; //same
+    this.loadSound = this.loadSound; //same
+
+    this.getSprite = this.getSprite; //same
+    this.loadSprite = this.loadSprite; //same
+
+    this.add = this.addObject;
+    this.get = this.getObjectByType;
+    this.getAll = this.getAllObjectsByType; 
+
+    this.render = this.setRender; 
+    this.update = this.setUpdate; 
+
+    this.removeListeners = this.removeListeners; //same
+    this.listen = this.listen; // same
   }
 
   /**

@@ -1,44 +1,45 @@
 # Hypergame markup language
 
 ```
-<!--game.html-->
+<!DOCTYPE html>
+<head><title>HGML example</title></head>
+<body>
+  <game w="480" h="320">
+    <player x="100" y="240" w="32" h="32" color="blue">
+      <method name="moveUp" action="
+        this.y -= 0.4 * hgml.G.deltaTime ">
+      </method>
+    </player>
+    <wall x="0" y="0" w="480" h="32" color="black" solid="true"></wall>
+    <banana x="200" y="200" w="32" h="32" color="yellow"></banana>
+  </game>
 
-<game w="480" h="320">
-  <player x="100" y="100" w="32" h="32" color="blue">
-    <method name="moveUp" action="
-      this.x += 2 * hgml.G.deltaTime ">
-    </method>
-  </player>
-  <wall x="0" y="0" w="480" h="32" color="black" solid="true"></wall>
-  <banana x="200" y="200" w="32" h="32" color="yellow"></banana>
-</game>
-
-<script type="module">
-  import HGML from './hgml.js';
-
-  const hgml = new HGML();
-  await hgml.init();
-  hgml.startGameLoop();
-
-  hgml.listen('keydown', (event) => {
-    if (event.code === 'Space') {
-      hgml.getObjectByType("PLAYER").moveUp();
-    }
-  })
-
-  hgml.setUpdate((obj, deltaTime) => {
-    if (obj.type === "BANANA") {
-      obj.y -= 0.4*deltaTime;
-    }
-  });
-
-  hgml.setRender((obj, ctx) => {
-    ctx.fillStyle = obj.color;
-    ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
-  });
-
-</script>
-
+  <script type="module">
+    import HGML from './hgml.js';
+  
+    const hgml = new HGML();
+    await hgml.init();
+    hgml.loop();
+  
+    hgml.listen('keydown', (event) => {
+      if (event.code === 'Space') {
+        hgml.get("PLAYER").moveUp();
+      }
+    })
+  
+    hgml.update((obj, deltaTime) => {
+      if (obj.type === "BANANA") {
+        obj.y -= 0.4*deltaTime;
+      }
+    });
+  
+    hgml.render((obj, ctx) => {
+      ctx.fillStyle = obj.color;
+      ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
+    });
+  </script>
+</body>
+</html>
 ```
 
 # HGML's public class methods
