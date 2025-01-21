@@ -48,23 +48,28 @@
   All <game>'s attributes will be placed into hgml.G.globals
     Reserved attributes for <game>: w, h, bgColor
   -->
-<game w="640" h="480" bgColor="yellow"></game>
+<game w="640" h="480" bgColor="yellow">
 
   <sprite name="pear" src="pear.png"></sprite> <!-- loads sprite -->
   <sound name="explosion" src="explosion.wav"></sound> <!-- loads sound -->
 
   <!-- You can set the name of game objects however you want
   solid="true" -attribute makes the object unpassable-->
-  <anything solid="true"> 
-    <!-- Game object methods must have name and action attributes> 
+  <!-- Solid objects can only be rendered -->
+  <rock solid="true"> </rock>
+
+  <randomobject x="100" y="100">
+    <!-- Game object methods must have name and action attributes
       They can also have parameters, which must be in valid JSON formatted array
       Methods have access to hgml instance
-     -->
+    -->
     <method name="greet" parameters='["name"]' action="
       console.log(hgml.getState());
-      console.log(name);">
+      console.log(name);
+      console.log(this.x, this.y); ">
     </method> 
-  </anything>
+  </randomobject>
+</game>
 ```
 
 ## HGML methods
