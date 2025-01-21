@@ -6,7 +6,7 @@
   <title>Flappy Bird</title>
 </head>
 <body>
-  <game w="360" h="650" scoreCollected="false">
+  <game w="360" h="650" background="lightgray" score_collected="false"> <!-- Attributes DO NOT SUPPORT camelCase! -->
     <sprite name="bird" src="bird.png"></sprite>
     <sound name="bling" src="bling.wav"></sound>
 
@@ -122,10 +122,10 @@
             hgml.reset();
           }
 
-          if (obj.x > (pipe.x + (pipe.w/2)) && !hgml.G.globals.scoreCollected) {
+          if (obj.x > (pipe.x + (pipe.w/2)) && !hgml.G.globals.score_collected) {
             hgml.get("SCOREBOARD").score++;
             hgml.getSound("bling").play();
-            hgml.G.globals.scoreCollected = true;
+            hgml.G.globals.score_collected = true;
           }
 
         });
@@ -135,7 +135,7 @@
 
         // If the pipe moves off-screen, reset its position and randomize height
         if (obj.x < -obj.w) {
-          hgml.G.globals.scoreCollected = false;
+          hgml.G.globals.score_collected = false;
           obj.x = hgml.G.globals.w;
 
           // Find the pair (top and bottom pipes) and set their heights

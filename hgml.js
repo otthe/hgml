@@ -268,11 +268,13 @@ export default class HGML {
 
     const globals = HGML._createObject(this.game, this);
 
+    console.log(globals);
+
     const gameCanvas = document.createElement("canvas");
     gameCanvas.setAttribute("id", "hgml");
     gameCanvas.width = globals.w || 800;
     gameCanvas.height = globals.h || 600; 
-    gameCanvas.style.backgroundColor = '#7cb7d9'
+    gameCanvas.style.backgroundColor = globals.background || '#7cb7d9';
 
     const ctx = gameCanvas.getContext("2d");
     ctx.imageSmoothingEnabled = false;
@@ -412,6 +414,7 @@ export default class HGML {
 
     // Process attributes as object's values
     for (const attr of e.attributes) {
+      console.log(attr);
       const name = attr.name;
       const value = isNaN(attr.value) ? attr.value : parseFloat(attr.value);
 

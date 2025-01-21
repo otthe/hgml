@@ -46,9 +46,9 @@
 ```html
  <!-- 
   All <game>'s attributes will be placed into hgml.G.globals
-    Reserved attributes for <game>: w, h, bgColor
+    Reserved attributes for <game>: w, h, background
   -->
-<game w="640" h="480" bgColor="yellow">
+<game w="640" h="480" background="yellow"> <!-- IMPORTANT! attribute tag names do not support camelCase !!! -->
 
   <sprite name="pear" src="pear.png"></sprite> <!-- loads sprite -->
   <sound name="explosion" src="explosion.wav"></sound> <!-- loads sound -->
