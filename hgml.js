@@ -1,6 +1,6 @@
 export default class HGML {
-  constructor() {
-    this.game = document.querySelector('game');
+  constructor(tag) {
+    this.game = document.querySelector(tag);
     if (!this.game) throw new Error("No game window found!");
     
     this.G = {
@@ -268,8 +268,6 @@ export default class HGML {
 
     const globals = HGML._createObject(this.game, this);
 
-    console.log(globals);
-
     const gameCanvas = document.createElement("canvas");
     gameCanvas.setAttribute("id", "hgml");
     gameCanvas.width = globals.w || 800;
@@ -414,7 +412,6 @@ export default class HGML {
 
     // Process attributes as object's values
     for (const attr of e.attributes) {
-      console.log(attr);
       const name = attr.name;
       const value = isNaN(attr.value) ? attr.value : parseFloat(attr.value);
 

@@ -18,7 +18,7 @@
   <script type="module">
     import HGML from './hgml.js';
   
-    const hgml = new HGML();
+    const hgml = new HGML('game');
     await hgml.init();
     hgml.loop();
   
