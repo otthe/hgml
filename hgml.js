@@ -356,7 +356,7 @@ export default class HGML {
     this.G.lastFrameTime = 0;
     this.G.deltaTime = 0;
   
-    // Reinitialize game objects and options
+    // Reinitialize game objects and globals
     const gameElements = this.game.children;
     for (const element of gameElements) {
       const obj = HGML._createObject(element, this);
@@ -365,14 +365,12 @@ export default class HGML {
   
     const globals = HGML._createObject(this.game, this);
   
-    // Reset canvas
     const gameCanvas = this.G.instance;
     gameCanvas.width = globals.w || 800;
     gameCanvas.height = globals.h || 600;
     this.G.ctx.imageSmoothingEnabled = false;
     this.G.ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
   
-    // Reset options
     this.G.globals = globals;
   
     console.log("Game has been reset!");

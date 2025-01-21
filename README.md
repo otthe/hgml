@@ -1,6 +1,7 @@
 # Hypergame markup language
 
-```
+## Get started
+```html
 <!DOCTYPE html>
 <head><title>HGML example</title></head>
 <body>
@@ -41,35 +42,51 @@
 </body>
 </html>
 ```
+## Reserved tags and attributes
+```html
+ <!-- 
+  All <game>'s attributes will be placed into hgml.G.globals
+    Reserved attributes for <game>: w, h, bgColor
+  -->
+<game w="640" h="480" bgColor="yellow"></game>
 
-# HGML's public class methods
+  <sprite name="pear" src="pear.png"></sprite> <!-- loads sprite -->
+  <sound name="explosion" src="explosion.wav"></sound> <!-- loads sound -->
+
+  <!-- You can set the name of game objects however you want
+  solid="true" -attribute makes the object unpassable-->
+  <anything solid="true"> 
+    <!-- Game object methods must have name and action attributes> 
+      They can also have parameters, which must be in valid JSON formatted array
+      Methods have access to hgml instance
+     -->
+    <method name="greet" parameters='["name"]' action="
+      console.log(hgml.getState());
+      console.log(name);">
+    </method> 
+  </anything>
+```
+
+## HGML methods
 
 | Method  | Parameters | Definition  |
 | ------------- | ------------- | ------------- |
 |init()  |-|Initializes new game instance|
-|startGameLoop()  |-| Starts the game loop|
-|resetGame() |-| Kills the existing game loop and resets game state. Call startGameLoop() to start a new one|
+|loop()  |-| Starts the game loop|
+|reset() |-| Kills the existing game loop and resets game state. Call loop() to start a new one|
 |getState()|-| Returns game data object, you can also get it with 'hgml.G' |
-|getObjectByType()|type(string)|Returns game object with 'type', where type is the HTML tag in UPPERCASE|
-|getAllObjectsByType()|type(string)|Returns array of game objects with 'type', where type is the HTML tag in UPPERCASE|
-|checkCollision()|obj1(object), obj2(object)|Returns true or false depending if two game objects are colliding (rectangular collision)|
-
-# Game objects...
-Must have:
--x,y,w,h
-
-Should have:
-color
-
-Can have:
-image
-method(s) --> as child
-
-# Built-in methods
-checkCollision(obj1, obj2) --> check if objects are colliding
-
-getState() --> returns information about HGML instance
-
+|get()|type(string)|Returns game object with 'type', where type is the HTML tag in UPPERCASE|
+|getAll()|type(string)|Returns array of game objects with 'type', where type is the HTML tag in UPPERCASE|
+|collides()|obj1(object), obj2(object)|Returns true or false depending if two game objects are colliding (rectangular collision)|
+|getSound()|name(string)|Returns loaded sound|
+|loadSound()|name(string), src(string)|Loads sound into the game dynamically|
+|getSprite()|name(string)|Returns loaded sprite|
+|loadSprite()|name(string), src(string)|Loads sprite into the game dynamically|
+|add()|type(string), object(object)| Adds object into the game dynamically|
+|render()|callback(obj(object), ctx(object))| Starts render loop where you can set rendering for individual objects |
+|update()|callback(obj(object), deltaTime(float))| Starts update loop where you can set actions for individual objects |
+|listen()|type(string), callback(event)| Adds event listener of 'type' to the game|
+|removeListeners()|type(string)|Removes listeners of certain type from the game|
 
 # Things to consider
 If you are trying to add object to a position where solid object resides,
