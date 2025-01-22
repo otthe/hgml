@@ -47,8 +47,18 @@ export default class HGML {
 
     this.rect = this.rect; //same
     this.circle = this.circle; //same
+    this.line = this.line; //same
+    this.text = this.text; //same
   }
 
+  /**
+   * Draws text centered relative to provided x-position
+   * @param {string} textString - text to draw
+   * @param {number} x - center x-position of text
+   * @param {number} y - y position of text
+   * @param {string} color - color of text
+   * @param {string} font - font string, example: '20px Arial'
+   */
   text(textString, x, y, color, font) {
     if (!this.G.ctx) throw new Error("No rendering context for canvas found!");
     const ctx = this.G.ctx;
@@ -66,6 +76,15 @@ export default class HGML {
     ctx.fillText(textString, x - (textWidth/2), y);
   }
 
+  /**
+   * Draws line from A to B
+   * @param {number} startX - from x
+   * @param {number} startY - from y
+   * @param {number} targetX - to x
+   * @param {number} targetY - to y
+   * @param {number} width - line width
+   * @param {string} color - line color 
+   */
   line(startX,startY,targetX,targetY, width, color) {
     if (!this.G.ctx) throw new Error("No rendering context for canvas found!");
     const ctx = this.G.ctx;
@@ -79,6 +98,17 @@ export default class HGML {
     ctx.stroke();
   }
 
+  /**
+   * Draws a rectangle.
+   * @param {string} color - The fill color of the rectangle.
+   * @param {number} x - The x-coordinate of the top-left corner.
+   * @param {number} y - The y-coordinate of the top-left corner.
+   * @param {number} w - The width of the rectangle.
+   * @param {number} h - The height of the rectangle.
+   * @param {number} [outlineWidth=0] - The width of the outline (optional).
+   * @param {string} [outlineColor=null] - The color of the outline (optional).
+   * @returns {this} - The instance for chaining.
+   */
   rect(color, x, y, w, h, outlineWidth = 0, outlineColor = null) {
     if (!this.G.ctx) throw new Error("No rendering context for canvas found!");
     const ctx = this.G.ctx;
@@ -94,6 +124,16 @@ export default class HGML {
     return this;
   }
 
+   /**
+   * Draws a circle.
+   * @param {string} color - The fill color of the circle.
+   * @param {number} x - The x-coordinate of the center.
+   * @param {number} y - The y-coordinate of the center.
+   * @param {number} radius - The radius of the circle.
+   * @param {number} [outlineWidth=0] - The width of the outline (optional).
+   * @param {string} [outlineColor=null] - The color of the outline (optional).
+   * @returns {this} - The instance for chaining.
+   */
   circle(color, x, y, radius, outlineWidth = 0, outlineColor = null) {
     if (!this.G.ctx) throw new Error("No rendering context for canvas found!");
     const ctx = this.G.ctx;
@@ -337,9 +377,12 @@ export default class HGML {
 
     const gameCanvas = document.createElement("canvas");
     gameCanvas.setAttribute("id", "hgml");
+    gameCanvas.setAttribute("id", `hgml-${this.game.tagName.toLowerCase()}`);
     gameCanvas.width = globals.w || 800;
-    gameCanvas.height = globals.h || 600; 
-    gameCanvas.style.backgroundColor = globals.background || '#7cb7d9';
+    gameCanvas.height = globals.h || 600;
+    if (globals.background) {
+      gameCanvas.style.backgroundColor = globals.background; //|| '#7cb7d9';
+    }
 
     const ctx = gameCanvas.getContext("2d");
     ctx.imageSmoothingEnabled = false;
@@ -349,7 +392,9 @@ export default class HGML {
     this.G.ctx = ctx;
     this.G.id = gameCanvas.id;
 
-    document.body.appendChild(gameCanvas);
+    //document.body.appendChild(gameCanvas);
+    //this.game.replaceWith(gameCanvas);
+    this.game.insertAdjacentElement('afterend', gameCanvas);
 
     return this;
   }
