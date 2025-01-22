@@ -46,6 +46,40 @@ export default class HGML {
     this.listen = this.listen; // same
   }
 
+  rect(color, x, y, w, h, outlineWidth = 0, outlineColor = null) {
+    if (!this.G.ctx) throw new Error("No rendering context for canvas found!");
+    const ctx = this.G.ctx;
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, w, h);
+
+    if (outlineWidth > 0 && outlineColor) {
+      ctx.lineWidth = outlineWidth;
+      ctx.strokeStyle = outlineColor;
+      ctx.strokeRect(x, y, w, h);
+    }
+
+    return this;
+  }
+
+  circle(color, x, y, radius, outlineWidth = 0, outlineColor = null) {
+    if (!this.G.ctx) throw new Error("No rendering context for canvas found!");
+    const ctx = this.G.ctx;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.closePath();
+
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    if (outlineWidth > 0 && outlineColor) {
+      ctx.lineWidth = outlineWidth;
+      ctx.strokeStyle = outlineColor;
+      ctx.stroke();
+    }
+
+    return this;
+  }
+
   /**
    * Listen for events and store references for cleanup.
    * @param {string} type - Event type (e.g., "keydown").
@@ -318,7 +352,6 @@ export default class HGML {
       deltaTime = Math.min(deltaTime, MAX_DELTA_TIME);
       this.G.deltaTime = deltaTime;
 
-      // Your game loop logic
       const solidObjects = this.G.objects.filter(obj => obj.solid);
       for (const obj of this.G.objects) {
         if (!obj.solid) {
@@ -439,7 +472,7 @@ export default class HGML {
               parameters = JSON.parse(attr.value); // Parse the JSON string
             } catch (err) {
               console.error(`Invalid JSON in parameters attribute: ${attr.value}`, err);
-              parameters = []; // Default to an empty array
+              parameters = [];
             }
           }
         }

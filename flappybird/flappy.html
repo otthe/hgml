@@ -107,9 +107,15 @@
         if (!hgml.G.running) {
           hgml.loop();
         }
-
         hgml.get("BIRD").jump(hgml.G.deltaTime);
       }
+    });
+
+    hgml.listen('touchstart', (event) => {
+      if (!hgml.G.running) {
+        hgml.loop();
+      }
+      hgml.get("BIRD").jump(hgml.G.deltaTime);
     });
   
     hgml.update((obj, deltaTime) => {
