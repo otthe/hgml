@@ -44,6 +44,39 @@ export default class HGML {
 
     this.removeListeners = this.removeListeners; //same
     this.listen = this.listen; // same
+
+    this.rect = this.rect; //same
+    this.circle = this.circle; //same
+  }
+
+  text(textString, x, y, color, font) {
+    if (!this.G.ctx) throw new Error("No rendering context for canvas found!");
+    const ctx = this.G.ctx;
+
+    const textWidth = ctx.measureText(textString).width;
+
+    if (color) {
+      ctx.fillStyle = color;
+    }
+
+    if (font) {
+      ctx.font = font;
+    }
+
+    ctx.fillText(textString, x - (textWidth/2), y);
+  }
+
+  line(startX,startY,targetX,targetY, width, color) {
+    if (!this.G.ctx) throw new Error("No rendering context for canvas found!");
+    const ctx = this.G.ctx;
+
+    ctx.lineWidth = width || 1;
+    ctx.strokeStyle = color || '#000';
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(targetX, targetY);
+
+    ctx.stroke();
   }
 
   rect(color, x, y, w, h, outlineWidth = 0, outlineColor = null) {
