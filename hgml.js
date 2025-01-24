@@ -178,9 +178,9 @@ export default class HGML {
     this.G.listeners = this.G.listeners.filter(({ type: listenerType, handler, options }) => {
       if (!type || type === listenerType) {
         window.removeEventListener(listenerType, handler, options);
-        return false; // Remove from the array
+        return false;
       }
-      return true; // Keep in the array
+      return true;
     });
   }
 
@@ -349,10 +349,10 @@ export default class HGML {
       movingBox.bottom > staticBox.top &&
       movingBox.top < staticBox.bottom
     ) {
-      return true; // Collision detected
+      return true; 
     }
   
-    return false; // No collision
+    return false; 
   }
 
   /**
@@ -417,7 +417,7 @@ export default class HGML {
 
     const loop = (timestamp) => {
       if (!this.G.running || this.G.currentLoopId !== currentLoopId) {
-        return; // Abort if stopped or a new loop has started
+        return; //abort if stopped or a new loop has started
       }
 
       if (this.G.lastFrameTime === null) {
@@ -451,7 +451,7 @@ export default class HGML {
     };
 
     this.G.lastFrameTime = null;
-    this.G.loopId = requestAnimationFrame(loop); // Start the loop
+    this.G.loopId = requestAnimationFrame(loop);
   }
 
   /**
@@ -461,13 +461,11 @@ export default class HGML {
   resetGame() {
     this._stopGameLoop();
 
-    // Clear the current game state
     this.G.objects = [];
     this.G.running = false;
     this.G.lastFrameTime = 0;
     this.G.deltaTime = 0;
   
-    // Reinitialize game objects and globals
     const gameElements = this.game.children;
     for (const element of gameElements) {
       const obj = HGML._createObject(element, this);
@@ -488,7 +486,7 @@ export default class HGML {
   }
 
   /**
-   * Used to bride update callback between game loop and user api
+   * Used to bridge update callback between game loop and user api
    * @param {object} obj - game object reference
    * @param {Float} deltaTime - deltaTime
    */
@@ -499,7 +497,7 @@ export default class HGML {
   }
 
   /**
-   * Used to bride render callback between game loop and user api
+   * Used to bridge render callback between game loop and user api
    * @param {object} obj - game object reference 
    * @param {object} ctx - context to game canvas
    */
@@ -521,7 +519,7 @@ export default class HGML {
     const obj = {};
     obj.type = e.tagName;
 
-    // Process attributes as object's values
+    //process attributes as object's values
     for (const attr of e.attributes) {
       const name = attr.name;
       const value = isNaN(attr.value) ? attr.value : parseFloat(attr.value);
@@ -636,7 +634,7 @@ export default class HGML {
         this.G.loopId = null;
       }
 
-      // Ensure lastFrameTime is reset
+      //ensure lastFrameTime is reset
       this.G.lastFrameTime = null;
     }
   }

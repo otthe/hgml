@@ -51,11 +51,12 @@ Mini-library that transforms custom HTML elements into dynamic HTML5 canvas game
 ## Reserved tags and attributes
 ```html
  <!-- 
-  All <toplevel> tag attributes will be placed into hgml.G.globals
+  All <toplevel> tags can be named however you want, attributes will be placed into hgml.G.globals
     Reserved attributes for <toplevel>: w, h, background
   -->
 <game w="640" h="480" background="yellow"> <!-- IMPORTANT! attribute tag names do not support camelCase !!! -->
 
+  <!-- <sprite>  and <sound> is reserved!  -->
   <sprite name="pear" src="pear.png"></sprite> <!-- loads sprite -->
   <sound name="explosion" src="explosion.wav"></sound> <!-- loads sound -->
 
@@ -66,8 +67,9 @@ Mini-library that transforms custom HTML elements into dynamic HTML5 canvas game
 
   <randomobject x="100" y="100">
     <!-- Game object methods must have name and action attributes
-      They can also have parameters, which must be in valid JSON formatted array
-      Methods have access to hgml instance
+      They can also have parameters, which must be in valid JSON formatted array.
+      Methods have access to hgml instance.
+      <method> tag is reserved!
     -->
     <method name="greet" parameters='["name"]' action="
       console.log(hgml.getState());
@@ -98,6 +100,10 @@ Mini-library that transforms custom HTML elements into dynamic HTML5 canvas game
 |update()|callback(obj(object), deltaTime(float))| Starts update loop where you can set actions for individual objects |
 |listen()|type(string), callback(event)| Adds event listener of 'type' to the game|
 |removeListeners()|type(string)|Removes listeners of certain type from the game|
+|rect()|color, x, y, w, h, outlineWidth, outlineColor|Draws rectangle on rendering context (optional outlines)|
+|circle()|color, x, y, radius, outlineWidth, outlineColor|Draws circle on rendering context (optional outlines)|
+|text()|textString, x, y, color, font|Draws text on rendering context, centered relative to x (optional font)|
+|line()|startX,startY,targetX,targetY, width, color|Draws line from point A to B on rendering context|
 
 # Things to consider
 If you are trying to add object to a position where solid object resides,
